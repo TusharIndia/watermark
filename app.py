@@ -10,6 +10,12 @@ from flask_bcrypt import Bcrypt
 from flask_session import Session
 from dotenv import load_dotenv
 
+import fitz  # PyMuPDF
+from PIL import Image
+import img2pdf
+import time
+
+
 load_dotenv()
 app = Flask(__name__)
 app.secret_key =  os.getenv("SECRET_KEY")
@@ -80,6 +86,32 @@ def upload_pdf():
     return jsonify({"message": "File uploaded successfully", "filename": filename})
 
 
+# def add_watermark(input_pdf_path, output_pdf_path, username):
+#     # Create a watermark
+#     watermark_pdf = BytesIO()
+#     c = canvas.Canvas(watermark_pdf, pagesize=letter)
+#     c.setFont("Helvetica", 50)
+#     c.setFillColorRGB(0.7, 0.7, 0.7, 0.3)  # Light gray with transparency
+#     c.translate(300, 400)
+#     c.rotate(30)
+#     c.drawString(0, 0, username)
+#     c.save()
+    
+#     watermark_pdf.seek(0)
+#     watermark_reader = PdfReader(watermark_pdf)
+#     watermark_page = watermark_reader.pages[0]
+    
+#     # Read original PDF
+#     reader = PdfReader(input_pdf_path)
+#     writer = PdfWriter()
+    
+#     for page in reader.pages:
+#         page.merge_page(watermark_page)
+#         writer.add_page(page)
+    
+#     with open(output_pdf_path, "wb") as output_pdf:
+#         writer.write(output_pdf)
+
 def add_watermark(input_pdf_path, output_pdf_path, username):
     # Create a watermark
     watermark_pdf = BytesIO()
@@ -90,21 +122,56 @@ def add_watermark(input_pdf_path, output_pdf_path, username):
     c.rotate(30)
     c.drawString(0, 0, username)
     c.save()
-    
+
     watermark_pdf.seek(0)
     watermark_reader = PdfReader(watermark_pdf)
     watermark_page = watermark_reader.pages[0]
-    
-    # Read original PDF
+
+    # Read the original PDF
     reader = PdfReader(input_pdf_path)
     writer = PdfWriter()
-    
+
     for page in reader.pages:
         page.merge_page(watermark_page)
         writer.add_page(page)
-    
-    with open(output_pdf_path, "wb") as output_pdf:
-        writer.write(output_pdf)
+
+    temp_pdf_path = output_pdf_path.replace(".pdf", "_temp.pdf")
+
+    with open(temp_pdf_path, "wb") as temp_pdf:
+        writer.write(temp_pdf)
+
+    # Convert watermarked PDF to images using PyMuPDF
+    doc = fitz.open(temp_pdf_path)
+    images = []
+    temp_dir = "temp_images"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    for page_num in range(len(doc)):
+        img_path = os.path.join(temp_dir, f"page_{page_num}.png")
+        pix = doc[page_num].get_pixmap()  # Convert page to an image
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        img.save(img_path, "PNG")
+        images.append(img_path)
+
+    doc.close()
+
+    # Convert images back to a non-editable PDF
+    with open(output_pdf_path, "wb") as final_pdf:
+        final_pdf.write(img2pdf.convert(images))
+
+    time.sleep(1)
+
+    try:
+        os.remove(temp_pdf_path)  # Delete temp PDF after closing it
+    except PermissionError:
+        print(f"Warning: Unable to delete {temp_pdf_path}, skipping...")
+
+    for img in images:
+        os.remove(img)
+    os.rmdir(temp_dir)
+
+
+
 
 @app.route("/download/<filename>", methods=["GET"])
 def download_pdf(filename):
