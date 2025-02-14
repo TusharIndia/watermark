@@ -32,11 +32,12 @@
                         <a href="#security" class="hover:text-blue-400 transition-colors">Security</a>
                         {% if session.username %}
                         <div class="relative">
-                            <button id="user-menu-btn" class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                            <button id="user-menu-btn"
+                                class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">
                                 {{ session.username }}
                             </button>
                         </div>
-                     
+
                         {% else %}
                         <a href="/logins"
                             class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">Sign In</a>
@@ -55,25 +56,29 @@
             </nav>
             <div class="badd relative  z-10 container mx-auto px-6 py-1  w-[100vw] bg-gray-800 ">
                 <div id="menu" class="hidden md:hidden text-center   mb-10 flex-col w-full pb-5  pt-5">
-                    <a href="#features"
-                    class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Home</a>
+                    <a href="#features" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Home</a>
                     <a href="#features"
                         class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Features</a>
                     <a href="#security"
                         class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Security</a>
                     {% if session.role=='admin' %}
-                        <a href="/admin_upload" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Upload File</a>
-                        <a href="/admin_create_user" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Create User</a>
+                    <a href="/admin" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Admin
+                        Dashboard</a>
+                    <a href="/admin_upload" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Upload
+                        File</a>
+                    <a href="/admin_create_user"
+                        class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Create User</a>
                     {% elif session.role=='user' %}
-                        <a href="/user_files" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">All Files</a>    
+                    <a href="/user_files" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">All
+                        Files</a>
                     {% endif %}
                     {% if session.username %}
                     <a href="#" id="mobile-logout-link"
                         class="block py-2 px-4 text-sm bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Logout</a>
                     {% else %}
                     <a href="/logins"
-                    class="block py-2 px-4 text-sm bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Sign
-                    In</a>
+                        class="block py-2 px-4 text-sm bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Sign
+                        In</a>
                     {% endif %}
                 </div>
             </div>
@@ -138,15 +143,18 @@
             </div>
         </footer>
     </div>
-    <div id="user-menu" class="hidden absolute  h-[30] top-20 right-50 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-50 overflow-visible">
-        <a href="/"  class="block px-4 py-2 text-sm hover:bg-gray-200">Home</a>
+    <div id="user-menu"
+        class="hidden absolute  h-[30] top-20 right-50 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-50 overflow-visible">
+        <a href="/" class="block px-4 py-2 text-sm hover:bg-gray-200">Home</a>
         {% if session.role == 'user' %}
-            <a href="/user_files" class="block px-4 py-2 text-sm hover:bg-gray-200">All Files</a>
+        <a href="/user_files" class="block px-4 py-2 text-sm hover:bg-gray-200">All Files</a>
         {% elif session.role == 'admin' %}
-            <a href="/admin_upload" class="block px-4 py-2 text-sm hover:bg-gray-200">Upload File</a>
-            <a href="/admin_create_user" class="block px-4 py-2 text-sm hover:bg-gray-200">Create User</a>
+        <a href="/admin" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Admin Dashboard</a>
+
+        <a href="/admin_upload" class="block px-4 py-2 text-sm hover:bg-gray-200">Upload File</a>
+        <a href="/admin_create_user" class="block px-4 py-2 text-sm hover:bg-gray-200">Create User</a>
         {% endif %}
-            <a href="/" id="logout-link" href="#"  class="block px-4 py-2 text-sm hover:bg-gray-200">logout</a>
+        <a href="/" id="logout-link" href="#" class="block px-4 py-2 text-sm hover:bg-gray-200">logout</a>
     </div>
     {% block scripts %}{% endblock %}
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
