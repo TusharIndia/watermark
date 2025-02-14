@@ -61,9 +61,12 @@ def login():
     user = users_collection.find_one({"username": username})
     
     if user and bcrypt.check_password_hash(user["password"], password):
+        if session: 
+            return jsonify({"error": "Already logged in"}), 400
         session["username"] = username
         session["role"] = user.get("role", "user")
-        return jsonify({"message": "Login successful", "role": session["role"]})
+        user_data = {"username": user["username"], "role": user.get("role", "user"), "name": user.get("name"), "email": user.get("email")}
+        return jsonify({"message": "Login successful", "data": user_data, "role": session["role"]})
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route("/upload", methods=["POST"])
@@ -177,45 +180,63 @@ def logout():
 def home():
     return render_template("home.html")
 
-@app.route("/login")
+@app.route("/logins")
 def login_page():
+    if "username" in session:
+        if session.get("role") == "user":
+            return redirect("/user_files")
+        elif session.get("role") == "admin":
+            return redirect("/admin")
     return render_template("login.html")
 
 @app.route("/signup")
 def signup_page():
-    return redirect("/login")
-
-# Removed the converter route completely
-# @app.route("/converter")
-# def converter_page():
-#     if "username" not in session:
-#         return redirect("/login")
-#     return render_template("converter.html")
+    if "username" in session:
+        if session.get("role") == "user":
+            return redirect("/user_files")
+        elif session.get("role") == "admin":
+            return redirect("/admin")
+    return redirect("/logins")
 
 @app.route("/admin_login")
 def admin_login_page():
+    if "username" in session:
+        if session.get("role") == "user":
+            return redirect("/user_files")
+        elif session.get("role") == "admin":
+            return redirect("/admin")
     return render_template("admin_login.html")
 
 @app.route("/admin")
 def admin():
+    if session.get("role") != "admin" and session.get("role") == "user":
+        return redirect("/user_files")
     if "username" not in session or session.get("role") != "admin":
         return redirect("/admin_login")
-    return render_template("admin.html")
+    user_data = {"username": session["username"], "role": session.get("role", "admin")}
+    return render_template("admin.html", user_data=user_data)
 
 @app.route("/user_files")
 def user_files():
+    if session.get("role") != "user" and session.get("role") == "admin":
+        return redirect("/admin")
     if "username" not in session or session.get("role") != "user":
-        return redirect("/login")
-    return render_template("user_files.html")
+        return redirect("/logins")
+    user_data = {"username": session["username"], "role": session.get("role", "user")}
+    return render_template("user_files.html", user_data=user_data)
 
 @app.route("/admin_create_user")
 def admin_create_user():
+    if session.get("role") != "admin" and session.get("role") == "user":
+        return redirect("/user_files")
     if "username" not in session or session.get("role") != "admin":
         return redirect("/admin_login")
     return render_template("admin_create_user.html")
 
 @app.route("/admin_upload")
 def admin_upload_file():
+    if session.get("role") != "admin" and session.get("role") == "user":
+        return redirect("/user_files")
     if "username" not in session or session.get("role") != "admin":
         return redirect("/admin_login")
     return render_template("admin_upload_file.html")
