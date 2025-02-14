@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Upload Document{% endblock %}
+{% block content %}
+    <h2>Upload PDF</h2>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="file" name="file" accept="application/pdf" required>
+        <button type="submit">Upload</button>
+    </form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const file = document.getElementById('file').files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData
+    });
+    const result = await response.json();
+    alert(response.ok ? result.message : result.error);
+});
+</script>
+{% endblock %}

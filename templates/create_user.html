@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Create User{% endblock %}
+{% block content %}
+    <h2>Create User</h2>
+    <form id="create-user-form">
+        <label for="new-username">Username:</label>
+        <input type="text" id="new-username" name="username" required>
+        <label for="new-password">Password:</label>
+        <input type="password" id="new-password" name="password" required>
+        <button type="submit">Create User</button>
+    </form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('new-username').value;
+    const password = document.getElementById('new-password').value;
+    const response = await fetch('/create_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    });
+    const result = await response.json();
+    alert(response.ok ? result.message : result.error);
+});
+</script>
+{% endblock %}

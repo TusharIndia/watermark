@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Document Manager{% endblock %}
+
+{% block content %}
+
+<!-- Main Content -->
+<div class="container mx-auto px-4 py-8 ">
+    <div class="flex flex-col md:flex-row justify-center items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold mb-2 text-center">All Files </h1>
+            <p class="text-gray-400 text-center">Manage and protect your sensitive documents</p>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="relative mb-8">
+        <input id="search" type="text" placeholder="Search documents..." 
+            class="pl-10 bg-gray-900/50 border border-gray-700 text-white w-full p-3 rounded-md" />
+    </div>
+
+    <!-- Documents Grid -->
+    <div id="documents-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-20">
+        <!-- Documents will be dynamically inserted here -->
+    </div>
+
+    <!-- No Results Message -->
+    <p id="no-results" class="text-gray-400 text-center mt-4 hidden">No matching documents found.</p>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        const searchInput = document.getElementById('search');
+        const container = document.getElementById("documents-container");
+        const noResultsMessage = document.getElementById("no-results");
+        let filesData = [];
+
+        async function loadFiles() {
+            try {
+                const response = await fetch("/files");
+                const result = await response.json();
+                filesData = result.files || [];
+                renderFiles(filesData);
+            } catch (error) {
+                console.error("Failed to load files:", error);
+            }
+        }
+
+        function renderFiles(files) {
+            container.innerHTML = "";
+            if (files.length === 0) {
+                noResultsMessage.classList.remove("hidden");
+                return;
+            }
+
+            noResultsMessage.classList.add("hidden");
+            const fragment = document.createDocumentFragment();
+
+            files.forEach(file => {
+                const filename = file.filename || "Unknown File";
+                const fileType = file.type || "Unknown Type";
+                const fileSize = file.size || "Unknown Size";
+                const uploadDate = file.uploadDate ? new Date(file.uploadDate).toLocaleDateString() : "Invalid Date";
+                const status = file.status || "undefined";
+
+                const fileElement = document.createElement("div");
+                fileElement.className = "bg-gray-900/50 rounded-lg p-4 border border-gray-800";
+                fileElement.dataset.filename = filename.toLowerCase();
+                fileElement.innerHTML = `
+                    <div class='flex items-start justify-between mb-4'>
+                        <div>
+                            <h3 class='font-medium truncate'>${filename}</h3>
+                            <p class='text-sm text-gray-400'>${fileSize} • ${fileType}</p>
+                        </div>
+                    </div>
+                    <div class='flex items-center justify-between text-sm'>
+                        <span class='text-gray-400'>${uploadDate}</span>
+                        <span class='text-green-500'>${status}</span>
+                    </div>
+                    <button class="download-btn mt-3 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
+                        data-filename="${filename}">
+                        Download
+                    </button>
+                `;
+                fragment.appendChild(fileElement);
+            });
+
+            container.appendChild(fragment);
+        }
+
+        function searchFiles() {
+            const query = searchInput.value.toLowerCase();
+            const filteredFiles = filesData.filter(file =>
+                file.filename.toLowerCase().includes(query)
+            );
+            renderFiles(filteredFiles);
+        }
+
+        searchInput.addEventListener('input', searchFiles);
+
+        // Download functionality
+        container.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('download-btn')) {
+                const filename = e.target.dataset.filename;
+                const response = await fetch(`/download/${filename}`);
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    alert("Failed to download file.");
+                }
+            }
+        });
+
+        loadFiles();
+    });
+</script>
+{% endblock %}
