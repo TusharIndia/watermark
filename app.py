@@ -65,8 +65,34 @@ def login():
             return jsonify({"error": "Already logged in"}), 400
         session["username"] = username
         session["role"] = user.get("role", "user")
-        user_data = {"username": user["username"], "role": user.get("role", "user"), "name": user.get("name"), "email": user.get("email")}
-        return jsonify({"message": "Login successful", "data": user_data, "role": session["role"]})
+        if session["role"] == "admin":
+            session.pop("username", None)
+            session.pop("role", None)
+            return jsonify({"error": "Invalid credentials"}), 401
+        elif session["role"] == "user":
+            user_data = {"username": user["username"], "role": user.get("role", "user"), "name": user.get("name"), "email": user.get("email")}
+            return jsonify({"message": "Login successful", "data": user_data, "role": session["role"]})
+    return jsonify({"error": "Invalid credentials"}), 401
+
+@app.route("/adm-login", methods=["POST"])
+def admlogin():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    user = users_collection.find_one({"username": username})
+    
+    if user and bcrypt.check_password_hash(user["password"], password):
+        if session: 
+            return jsonify({"error": "Already logged in"}), 400
+        session["username"] = username
+        session["role"] = user.get("role", "user")
+        if session["role"] == "user":
+            session.pop("username", None)
+            session.pop("role", None)
+            return jsonify({"error": "Invalid credentials"}), 401
+        elif session["role"] == "admin":
+            user_data = {"username": user["username"], "role": user.get("role", "user"), "name": user.get("name"), "email": user.get("email")}
+            return jsonify({"message": "Login successful", "data": user_data, "role": session["role"]})
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route("/upload", methods=["POST"])
@@ -169,6 +195,17 @@ def download_pdf(filename):
     add_watermark(input_pdf_path, output_pdf_path, session['username'])
     
     return send_file(output_pdf_path, as_attachment=True)
+
+@app.route("/uploads/<filename>", methods=["GET"])
+def get_uploaded_file(filename):
+    if "username" not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        return jsonify({"error": "File not found"}), 404
+    
+    return send_file(file_path)
 
 @app.route("/logout", methods=["POST"])
 def logout():
