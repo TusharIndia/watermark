@@ -28,9 +28,18 @@
                             class="hover:text-blue-400 transition-colors">Features</a><a href="#security"
                             class="hover:text-blue-400 transition-colors">Security</a><a href="#pricing"
                             class="hover:text-blue-400 transition-colors">Pricing</a>
-                            <a href="/logins"
-                            class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">Sign
-                            In</a>
+                            {% if session.username %}
+                            <div class="relative">
+                                <button id="user-menu-btn" class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                                    {{ session.username }}
+                                </button>
+                                <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg">
+                                    <a href="#" id="logout-link" class="block px-4 py-2 text-sm hover:bg-gray-200">Logout</a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <a href="/logins" class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">Sign In</a>
+                        {% endif %}
                         </div>
                     <div class="md:hidden">
                         <button id="menu-btn" class="text-white focus:outline-none">
@@ -46,6 +55,9 @@
                     <a href="#security" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Security</a>
                     <a href="#pricing" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Pricing</a>
                     <a href="/logins" class="block py-2 px-4 text-sm bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Sign In</a>
+                    {% if session.username %}
+                    <a href="#" id="mobile-logout-link" class="block py-2 px-4 text-sm bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Logout</a>
+                {% endif %}
                 </div>
         </div>
 
@@ -114,6 +126,10 @@
        let menuBtn = document.getElementById('menu-btn');
         let menu = document.getElementById('menu');
         let mobileAuthLink = document.getElementById('mobile-auth-link');
+        let userMenuBtn = document.getElementById('user-menu-btn');
+        let userMenu = document.getElementById('user-menu');
+        let logoutLink = document.getElementById('logout-link');
+        let mobileLogoutLink = document.getElementById('mobile-logout-link');
 
         if (menuBtn && menu) {
             menuBtn.addEventListener('click', function () {
@@ -135,6 +151,38 @@
                     window.location.href = '/logins';
                 });
             }
+        }
+
+        if (userMenuBtn && userMenu) {
+            userMenuBtn.addEventListener('click', function () {
+                userMenu.classList.toggle('hidden');
+            });
+        }
+
+        if (logoutLink) {
+            logoutLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                fetch('/logout', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message === "Logged out successfully") {
+                            window.location.href = '/';
+                        }
+                    });
+            });
+        }
+
+        if (mobileLogoutLink) {
+            mobileLogoutLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                fetch('/logout', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message === "Logged out successfully") {
+                            window.location.href = '/';
+                        }
+                    });
+            });
         }
 
     </script>
