@@ -60,10 +60,8 @@
 
             files.forEach(file => {
                 const filename = file.filename || "Unknown File";
-                const fileType = file.type || "Unknown Type";
-                const fileSize = file.size || "Unknown Size";
-                const uploadDate = file.uploadDate ? new Date(file.uploadDate).toLocaleDateString() : "Invalid Date";
-                const status = file.status || "undefined";
+                const fileType = file.type || "PDF";
+                const status = file.status || "Complete";
 
                 const fileElement = document.createElement("div");
                 fileElement.className = "bg-gray-900/50 rounded-lg p-4 border border-gray-800";
@@ -72,11 +70,10 @@
                     <div class='flex items-start justify-between mb-4'>
                         <div>
                             <h3 class='font-medium truncate'>${filename}</h3>
-                            <p class='text-sm text-gray-400'>${fileSize} • ${fileType}</p>
                         </div>
                     </div>
                     <div class='flex items-center justify-between text-sm'>
-                        <span class='text-gray-400'>${uploadDate}</span>
+                        <span class='text-gray-400'>${fileType}</span>
                         <span class='text-green-500'>${status}</span>
                     </div>
                     <button class="download-btn mt-3 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
