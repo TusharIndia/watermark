@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Admin Login{% endblock %}
 {% block content %}
+<div id="flash-message" class=" z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
 <div class=" flex justify-center  py-10 mb-20">
     <div class="w-10/12 max-w-md p-6 bg-gray-800 rounded-2xl shadow-lg">
         <h2 class="text-2xl font-bold text-center text-white">Login</h2>
@@ -37,11 +38,18 @@
             body: JSON.stringify({ username, password })
         });
         const result = await response.json();
-        if (response.ok && result.message === "Login successful" && result.role === "admin") {
-            window.location.href = '/admin';
-        } else {
-            alert(result.error);
-        }
+        const flashMessage = document.getElementById('flash-message');
+        const isSuccess = response.ok && result.message === "Login successful" && result.role === "admin";
+        const bgClass = isSuccess ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
+        flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
+            <p class="font-bold">${isSuccess ? 'Success' : 'Error'}</p>
+            <p>${isSuccess ? result.message : result.error}</p>
+        </div>`;
+        flashMessage.classList.remove('hidden');
+        setTimeout(() => {
+            flashMessage.classList.add('hidden');
+            if (isSuccess) window.location.href = '/admin';
+        }, 1500);
     });
 </script>
 <script src="https://unpkg.com/@tailwindcss/browser@4"></script>

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, send_file, jsonify, session, render_template, redirect
+from flask import Flask, request, send_file, jsonify, render_template, redirect
 from werkzeug.utils import secure_filename
 from pymongo import MongoClient
 from PyPDF2 import PdfReader, PdfWriter
@@ -7,20 +7,18 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from io import BytesIO
 from flask_bcrypt import Bcrypt
-from flask_session import Session
 from dotenv import load_dotenv
 
 import fitz  # PyMuPDF
 from PIL import Image
 import img2pdf
 import time
-
+import jwt  # NEW
+import hashlib  # NEW
 
 load_dotenv()
 app = Flask(__name__)
 app.secret_key =  os.getenv("SECRET_KEY")
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
 bcrypt = Bcrypt(app)
 
 UPLOAD_FOLDER = "uploads"
@@ -38,22 +36,43 @@ ADMIN_PASSWORD = bcrypt.generate_password_hash(os.getenv("ADMIN_PASSWORD")).deco
 if not users_collection.find_one({"username": ADMIN_USERNAME}):
     users_collection.insert_one({"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD, "role": "admin"})
 
+# Helper to get current user from JWT cookie
+def get_current_user():
+    token = request.cookies.get("token")
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, app.secret_key, algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+
 @app.route("/create_user", methods=["POST"])
 def create_user():
-    if "username" not in session or session["username"] != ADMIN_USERNAME:
+    current_user = get_current_user()
+    if not current_user or current_user.get("username") != os.getenv("ADMIN_USERNAME"):
         return jsonify({"error": "Unauthorized"}), 403
     
     data = request.json
     username = data.get("username")
+    email = data.get("email")
     password = bcrypt.generate_password_hash(data.get("password")).decode('utf-8')
     
     if users_collection.find_one({"username": username}):
         return jsonify({"error": "User already exists"}), 400
+    if users_collection.find_one({"email": email}):
+        return jsonify({"error": "User with this email already exists"}), 400
     
-    users_collection.insert_one({"name":data.get("name"),"email":data.get("email"),"username": username, "password": password, "role": "user"})
+    users_collection.insert_one({
+        "name": data.get("name"),
+        "email": email,
+        "username": username,
+        "password": password,
+        "role": "user"
+    })
     return jsonify({"message": "User created successfully"})
 
-@app.route("/login", methods=["POST"])
+@app.route("/logins", methods=["POST"])
 def login():
     data = request.json
     username = data.get("username")
@@ -61,17 +80,24 @@ def login():
     user = users_collection.find_one({"username": username})
     
     if user and bcrypt.check_password_hash(user["password"], password):
-        if session: 
+        # If a valid token already exists, reject duplicate logins
+        if get_current_user():
             return jsonify({"error": "Already logged in"}), 400
-        session["username"] = username
-        session["role"] = user.get("role", "user")
-        if session["role"] == "admin":
-            session.pop("username", None)
-            session.pop("role", None)
+        if user.get("role") == "admin":
             return jsonify({"error": "Invalid credentials"}), 401
-        elif session["role"] == "user":
-            user_data = {"username": user["username"], "role": user.get("role", "user"), "name": user.get("name"), "email": user.get("email")}
-            return jsonify({"message": "Login successful", "data": user_data, "role": session["role"]})
+        token = jwt.encode({
+            "username": user["username"],
+            "role": user.get("role", "user")
+        }, app.secret_key, algorithm="HS256")
+        user_data = {
+            "username": user["username"],
+            "role": user.get("role", "user"),
+            "name": user.get("name"),
+            "email": user.get("email")
+        }
+        response = jsonify({"message": "Login successful", "data": user_data, "role": user.get("role"), "token": token})
+        response.set_cookie("token", token)
+        return response
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route("/adm-login", methods=["POST"])
@@ -82,22 +108,29 @@ def admlogin():
     user = users_collection.find_one({"username": username})
     
     if user and bcrypt.check_password_hash(user["password"], password):
-        if session: 
+        if get_current_user():
             return jsonify({"error": "Already logged in"}), 400
-        session["username"] = username
-        session["role"] = user.get("role", "user")
-        if session["role"] == "user":
-            session.pop("username", None)
-            session.pop("role", None)
+        if user.get("role") == "user":
             return jsonify({"error": "Invalid credentials"}), 401
-        elif session["role"] == "admin":
-            user_data = {"username": user["username"], "role": user.get("role", "user"), "name": user.get("name"), "email": user.get("email")}
-            return jsonify({"message": "Login successful", "data": user_data, "role": session["role"]})
+        token = jwt.encode({
+            "username": user["username"],
+            "role": user.get("role", "admin")
+        }, app.secret_key, algorithm="HS256")
+        user_data = {
+            "username": user["username"],
+            "role": user.get("role", "admin"),
+            "name": user.get("name"),
+            "email": user.get("email")
+        }
+        response = jsonify({"message": "Login successful", "data": user_data, "role": user.get("role"), "token": token})
+        response.set_cookie("token", token)
+        return response
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route("/upload", methods=["POST"])
 def upload_pdf():
-    if "username" not in session or session.get("role") != "admin":
+    current_user = get_current_user()
+    if not current_user or current_user.get("role") != "admin":
         return jsonify({"error": "Only admin can upload files"}), 403
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
@@ -108,17 +141,28 @@ def upload_pdf():
     
     filename = secure_filename(file.filename)
     file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+    # Check if file already exists with same name and content
+    if os.path.exists(file_path):
+        new_contents = file.read()
+        new_hash = hashlib.md5(new_contents).hexdigest()
+        file.seek(0)  # reset file pointer
+        with open(file_path, "rb") as existing_file:
+            existing_hash = hashlib.md5(existing_file.read()).hexdigest()
+        if new_hash == existing_hash:
+            return jsonify({"error": "File already uploaded"}), 400
+
     file.save(file_path)
     
-    files_collection.insert_one({"filename": filename, "uploaded_by": session["username"]})
+    files_collection.insert_one({"filename": filename, "uploaded_by": os.getenv("ADMIN_USERNAME")})
     return jsonify({"message": "File uploaded successfully", "filename": filename})
 
 @app.route("/files", methods=["GET"])
 def list_files():
-    if "username" not in session:
+    if not get_current_user():
         return jsonify({"error": "Unauthorized"}), 403
     # Only include files uploaded by admin
-    admin_files = list(files_collection.find({"uploaded_by": ADMIN_USERNAME}, {"_id": 0, "filename": 1}))
+    admin_files = list(files_collection.find({"uploaded_by": os.getenv("ADMIN_USERNAME")}, {"_id": 0, "filename": 1}))
     return jsonify({"files": admin_files})
 
 def add_watermark(input_pdf_path, output_pdf_path, username):
@@ -179,26 +223,24 @@ def add_watermark(input_pdf_path, output_pdf_path, username):
         os.remove(img)
     os.rmdir(temp_dir)
 
-
-
-
 @app.route("/download/<filename>", methods=["GET"])
 def download_pdf(filename):
-    if "username" not in session or session.get("role") != "user":
+    current_user = get_current_user()
+    if not current_user or current_user.get("role") != "user":
         return jsonify({"error": "Unauthorized"}), 403
     
     input_pdf_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(input_pdf_path):
         return jsonify({"error": "File not found"}), 404
     
-    output_pdf_path = os.path.join(WATERMARKED_FOLDER, f"{session['username']}_{filename}")
-    add_watermark(input_pdf_path, output_pdf_path, session['username'])
+    output_pdf_path = os.path.join(WATERMARKED_FOLDER, f"{current_user['username']}_{filename}")
+    add_watermark(input_pdf_path, output_pdf_path, current_user['username'])
     
     return send_file(output_pdf_path, as_attachment=True)
 
 @app.route("/uploads/<filename>", methods=["GET"])
 def get_uploaded_file(filename):
-    if "username" not in session:
+    if not get_current_user():
         return jsonify({"error": "Unauthorized"}), 403
     
     file_path = os.path.join(UPLOAD_FOLDER, filename)
@@ -207,76 +249,92 @@ def get_uploaded_file(filename):
     
     return send_file(file_path)
 
+@app.route("/delete/<filename>", methods=["DELETE"])
+def delete_file(filename):
+    current_user = get_current_user()
+    if not current_user or current_user.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # Delete file from the uploads folder
+    
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "File not found in uploads"}), 404
+
+    # Delete file record from the database
+    result = files_collection.delete_one({"filename": filename})
+    if result.deleted_count == 0:
+        return jsonify({"error": "File record not found in database"}), 404
+
+    return jsonify({"message": "File deleted successfully"})
+
+
+
+
 @app.route("/logout", methods=["POST"])
 def logout():
-    session.pop("username", None)
-    session.pop("role", None)
-    return jsonify({"message": "Logged out successfully"})
+    response = jsonify({"message": "Logged out successfully"})
+    response.delete_cookie("token")
+    return response
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    return render_template("home.html", current_user=get_current_user())
 
-@app.route("/logins")
+@app.route("/login")
 def login_page():
-    if "username" in session:
-        if session.get("role") == "user":
+    if get_current_user():
+        user = get_current_user()
+        if user.get("role") == "user":
             return redirect("/user_files")
-        elif session.get("role") == "admin":
+        elif user.get("role") == "admin":
             return redirect("/admin")
-    return render_template("login.html")
+    return render_template("login.html", current_user=None)
 
-@app.route("/signup")
-def signup_page():
-    if "username" in session:
-        if session.get("role") == "user":
-            return redirect("/user_files")
-        elif session.get("role") == "admin":
-            return redirect("/admin")
-    return redirect("/logins")
+
 
 @app.route("/admin_login")
 def admin_login_page():
-    if "username" in session:
-        if session.get("role") == "user":
+    if get_current_user():
+        user = get_current_user()
+        if user.get("role") == "user":
             return redirect("/user_files")
-        elif session.get("role") == "admin":
+        elif user.get("role") == "admin":
             return redirect("/admin")
-    return render_template("admin_login.html")
+    return render_template("admin_login.html", current_user=None)
 
 @app.route("/admin")
 def admin():
-    if session.get("role") != "admin" and session.get("role") == "user":
-        return redirect("/user_files")
-    if "username" not in session or session.get("role") != "admin":
+    current_user = get_current_user()
+    if (current_user and current_user.get("role") == "user") or (not current_user) or (current_user.get("role") != "admin"):
         return redirect("/admin_login")
-    user_data = {"username": session["username"], "role": session.get("role", "admin")}
-    return render_template("admin.html", user_data=user_data)
+    return render_template("admin.html", current_user=current_user)
 
 @app.route("/user_files")
 def user_files():
-    if session.get("role") != "user" and session.get("role") == "admin":
-        return redirect("/admin")
-    if "username" not in session or session.get("role") != "user":
+    current_user = get_current_user()
+    if (current_user and current_user.get("role") == "admin") or (not current_user) or (current_user.get("role") != "user"):
         return redirect("/logins")
-    user_data = {"username": session["username"], "role": session.get("role", "user")}
-    return render_template("user_files.html", user_data=user_data)
+    return render_template("user_files.html", current_user=current_user)
 
 @app.route("/admin_create_user")
 def admin_create_user():
-    if session.get("role") != "admin" and session.get("role") == "user":
-        return redirect("/user_files")
-    if "username" not in session or session.get("role") != "admin":
+    current_user = get_current_user()
+    if (current_user and current_user.get("role") == "user") or (not current_user) or (current_user.get("role") != "admin"):
         return redirect("/admin_login")
-    return render_template("admin_create_user.html")
+    return render_template("admin_create_user.html", current_user=current_user)
 
 @app.route("/admin_upload")
 def admin_upload_file():
-    if session.get("role") != "admin" and session.get("role") == "user":
-        return redirect("/user_files")
-    if "username" not in session or session.get("role") != "admin":
+    current_user = get_current_user()
+    if (current_user and current_user.get("role") == "user") or (not current_user) or (current_user.get("role") != "admin"):
         return redirect("/admin_login")
-    return render_template("admin_upload_file.html")
+    return render_template("admin_upload_file.html", current_user=current_user)
 
 if __name__ == "__main__":
     app.run(debug=True)

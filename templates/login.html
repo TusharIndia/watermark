@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}User Login{% endblock %}
 {% block content %}
+<div id="flash-message" class=" z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
+
 <div class=" flex justify-center  py-10 mb-20">
     <div class="w-10/12 max-w-md p-6 bg-gray-800 rounded-2xl shadow-lg">
         <h2 class="text-2xl font-bold text-center text-white">Login</h2>
@@ -21,6 +23,8 @@
             </div>
             <button type="submit" class="w-full px-4 py-3 mt-6 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none">Login</button>
         </form>
+        <!-- Added flash message container -->
+        <div id="flash-message" class="hidden"></div>
         <p class="mt-4 text-center text-gray-400">Don't have an account? <a href="#" class="text-blue-400 hover:underline">Sign up</a></p>
     </div>
 </div>
@@ -32,17 +36,25 @@
         e.preventDefault();
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-        const response = await fetch('/login', {
+        const response = await fetch('/logins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
         const result = await response.json();
-        if (response.ok) {
-            window.location.href = '/user_files';
-        } else {
-            alert(result.error);
-        }
+        // Modified alert handling with custom flash message
+        const flashMessage = document.getElementById('flash-message');
+        const isSuccess = response.ok && result.message === "Login successful" && result.role === "user";
+        const bgClass = isSuccess ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
+        flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
+            <p class="font-bold">${isSuccess ? 'Success' : 'Error'}</p>
+            <p>${isSuccess ? result.message : result.error}</p>
+        </div>`;
+        flashMessage.classList.remove('hidden');
+        setTimeout(() => {
+            flashMessage.classList.add('hidden');
+            if (isSuccess) window.location.href = '/admin';
+        }, 1500);
     });
   });
 </script>

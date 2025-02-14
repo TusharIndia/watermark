@@ -4,6 +4,8 @@
 {% block content %}
 
 <!-- Main Content -->
+<div id="flash-message" class=" z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md "></div>
+
 <div class="container mx-auto px-4 py-8 ">
     <div class="flex flex-col md:flex-row justify-center items-center mb-8 gap-4">
         <div>
@@ -24,7 +26,7 @@
     </div>
 
     <!-- No Results Message -->
-    <p id="no-results" class="text-gray-400 text-center mt-4 hidden">No matching documents found.</p>
+    <p id="no-results" class="text-gray-400 text-center mt-4 hidden mb-20">No matching documents found.</p>
 </div>
 
 {% endblock %}
@@ -113,7 +115,17 @@
                     a.click();
                     document.body.removeChild(a);
                 } else {
-                    alert("Failed to download file.");
+                    // Custom alert instead of default alert
+                    const flashMessage = document.getElementById('flash-message');
+                    const bgClass = 'bg-red-100 border-red-500 text-red-700';
+                    flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
+                        <p class="font-bold">Error</p>
+                        <p>Failed to download file.</p>
+                    </div>`;
+                    flashMessage.classList.remove('hidden');
+                    setTimeout(() => {
+                        flashMessage.classList.add('hidden');
+                    }, 3000);
                 }
             }
         });

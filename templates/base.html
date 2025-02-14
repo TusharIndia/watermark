@@ -27,19 +27,19 @@
                         </div><a href="/"><span class="text-2xl font-bold">SecureDoc</span></a>
                     </div>
                     <div class="hidden md:flex items-center space-x-8">
-                        <a href="#features" class="hover:text-blue-400 transition-colors">Home</a>
-                        <a href="#features" class="hover:text-blue-400 transition-colors">Features</a>
-                        <a href="#security" class="hover:text-blue-400 transition-colors">Security</a>
-                        {% if session.username %}
+                        <a href="/" class="hover:text-blue-400 transition-colors">Home</a>
+                        <a href="/#features" class="hover:text-blue-400 transition-colors">Features</a>
+                        <a href="/#security" class="hover:text-blue-400 transition-colors">Security</a>
+                        {% if current_user %}
                         <div class="relative">
                             <button id="user-menu-btn"
                                 class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                                {{ session.username }}
+                                {{ current_user.username }}
                             </button>
                         </div>
 
                         {% else %}
-                        <a href="/logins"
+                        <a href="/login"
                             class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">Sign In</a>
                         {% endif %}
                     </div>
@@ -56,40 +56,38 @@
             </nav>
             <div class="badd relative  z-10 container mx-auto px-6 py-1  w-[100vw] bg-gray-800 ">
                 <div id="menu" class="hidden md:hidden text-center   mb-10 flex-col w-full pb-5  pt-5">
-                    <a href="#features" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Home</a>
-                    <a href="#features"
-                        class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Features</a>
-                    <a href="#security"
-                        class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Security</a>
-                    {% if session.role=='admin' %}
-                    <a href="/admin" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Admin
+                    <a href="/" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Home</a>
+                    <a href="/#features" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Features</a>
+                    <a href="/#security" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Security</a>
+                    {% if current_user and current_user.role=='admin' %}
+                    <a href="/admin" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Admin
                         Dashboard</a>
-                    <a href="/admin_upload" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Upload
+                    <a href="/admin_upload" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Upload
                         File</a>
                     <a href="/admin_create_user"
-                        class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Create User</a>
-                    {% elif session.role=='user' %}
-                    <a href="/user_files" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">All
+                        class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Create User</a>
+                    {% elif current_user and current_user.role=='user' %}
+                    <a href="/user_files" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">All
                         Files</a>
                     {% endif %}
-                    {% if session.username %}
+                    {% if current_user %}
                     <a href="#" id="mobile-logout-link"
-                        class="block py-2 px-4 text-sm bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Logout</a>
+                        class="block py-2 px-4 text-lg bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Logout</a>
                     {% else %}
-                    <a href="/logins"
-                        class="block py-2 px-4 text-sm bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Sign
+                    <a href="/login"
+                        class="block py-2 px-4 text-lg bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Sign
                         In</a>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <main class="z-0">
+        <main class="z-0 mt-20">
             {% block content %}{% endblock %}
         </main>
         <footer class="border-t border-white/10 py-16">
             <div class="container mx-auto px-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+                <div class="flex flex-wrap items-center justify-between w-full">
                     <div>
                         <div class="flex items-center space-x-3 mb-6">
                             <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-xl"><svg
@@ -103,52 +101,30 @@
                         </div>
                         <p class="text-gray-400">Enterprise-grade document security and watermarking solutions.</p>
                     </div>
-                    <div>
-                        <h4 class="font-semibold mb-4">Product</h4>
+                    
+                    <div class="mt-4 mr-10">
+                        <h4 class="font-semibold mb-4">Links</h4>
                         <ul class="space-y-2">
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Security</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Enterprise</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold mb-4">Company</h4>
-                        <ul class="space-y-2">
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">About</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Customers</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Careers</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold mb-4">Resources</h4>
-                        <ul class="space-y-2">
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Documentation</a>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Home</a>
                             </li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Support</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">API</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Status</a></li>
+                         
+                            <li><a href="/#features" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
+                            <li><a href="/#security" class="text-gray-400 hover:text-white transition-colors">Security</a></li>
                         </ul>
                     </div>
                 </div>
                 <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
                     <div class="text-gray-400 mb-4 md:mb-0">© 2024 SecureDoc. All rights reserved.</div>
-                    <div class="flex space-x-6"><a href="#"
-                            class="text-gray-400 hover:text-white transition-colors">Terms</a><a href="#"
-                            class="text-gray-400 hover:text-white transition-colors">Privacy</a><a href="#"
-                            class="text-gray-400 hover:text-white transition-colors">Security</a><a href="#"
-                            class="text-gray-400 hover:text-white transition-colors">Status</a></div>
-                </div>
+                    
             </div>
         </footer>
     </div>
     <div id="user-menu"
         class="hidden absolute  h-[30] top-20 right-50 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-50 overflow-visible">
         <a href="/" class="block px-4 py-2 text-sm hover:bg-gray-200">Home</a>
-        {% if session.role == 'user' %}
+        {% if current_user and current_user.role == 'user' %}
         <a href="/user_files" class="block px-4 py-2 text-sm hover:bg-gray-200">All Files</a>
-        {% elif session.role == 'admin' %}
+        {% elif current_user and current_user.role == 'admin' %}
         <a href="/admin" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Admin Dashboard</a>
 
         <a href="/admin_upload" class="block px-4 py-2 text-sm hover:bg-gray-200">Upload File</a>
@@ -184,7 +160,7 @@
             if (mobileAuthLink) {
                 mobileAuthLink.addEventListener('click', function (event) {
                     event.preventDefault();
-                    window.location.href = '/logins';
+                    window.location.href = '/login';
                 });
             }
         }
