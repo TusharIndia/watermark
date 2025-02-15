@@ -8,7 +8,6 @@ from reportlab.lib.pagesizes import letter
 from io import BytesIO
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
-
 import fitz  # PyMuPDF
 from PIL import Image
 import img2pdf
