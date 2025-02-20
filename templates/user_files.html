@@ -10,14 +10,14 @@
     <div class="flex flex-col md:flex-row justify-center items-center mb-8 gap-4">
         <div>
             <h1 class="text-3xl font-bold mb-2 text-center">All Files </h1>
-            <p class="text-gray-400 text-center">Manage and protect your sensitive documents</p>
+            <p class="text-black text-center">Manage and protect your sensitive documents</p>
         </div>
     </div>
 
     <!-- Search Bar -->
     <div class="relative mb-8">
         <input id="search" type="text" placeholder="Search documents..." 
-            class="pl-10 bg-gray-900/50 border border-gray-700 text-white w-full p-3 rounded-md" />
+            class="pl-10 bg-white border border-orange-500 text-black w-full p-3 rounded-md" />
     </div>
 
     <!-- Documents Grid -->
@@ -66,7 +66,7 @@
                 const status = file.status || "Complete";
 
                 const fileElement = document.createElement("div");
-                fileElement.className = "bg-gray-900/50 rounded-lg p-4 border border-gray-800";
+                fileElement.className = "bg-white rounded-lg p-4 border border-orange-500";
                 fileElement.dataset.filename = filename.toLowerCase();
                 fileElement.innerHTML = `
                     <div class='flex items-start justify-between mb-4'>
@@ -76,9 +76,9 @@
                     </div>
                     <div class='flex items-center justify-between text-sm'>
                         <span class='text-gray-400'>${fileType}</span>
-                        <span class='text-green-500'>${status}</span>
+                        <span class='text-orange-500'>${status}</span>
                     </div>
-                    <button class="download-btn mt-3 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
+                    <button class="download-btn mt-3 w-full bg-orange-400 text-white border py-2 rounded-lg hover:bg-blue-600 transition"
                         data-filename="${filename}">
                         Download
                     </button>

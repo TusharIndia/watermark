@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}User Login{% endblock %}
+{% block content %}
+<div class="bg-[#ffffff] text-black relative top-[-20px]">
+    
+    <div class="relative bg-orange-500  text-white py-10 text-center mb-5 opacity-90">
+        <div class=" mx-auto px-6">
+            <h1 class="text-4xl font-bold animate-fade-in">About Udaan (UPSC)</h1>
+            <p class="text-lg mt-2 opacity-80">Empowering document security with cutting-edge technology.</p>
+        </div>
+    </div>
+
+    <section class=" mx-auto px-6 py-16 flex flex-col md:flex-row items-center mb-10 ">
+        <div class="md:w-1/2">
+            <h2 class="text-3xl font-bold mb-4">Our Mission</h2>
+            <p class="text-lg text-gray-700">At SecureDoc, we are committed to providing top-tier document security solutions. Our platform ensures protection against unauthorized access, enhancing data integrity and confidentiality.</p>
+        </div>
+        <div class="md:w-1/2 flex justify-center">
+            <img src="/static/assests/loginUdaan.png" alt="Security" class="w-3/4 rounded-lg animate-slide-in mt-5 ">
+        </div>
+    </section>
+
+    <section class="bg-gray-100 py-16 ">
+        <div class=" mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold">Why Choose Us?</h2>
+            <div class="flex flex-wrap justify-center mt-6">
+                <div class="w-full md:w-1/3 p-4">
+                    <div class="bg-white shadow-lg p-6 rounded-lg transform hover:scale-105 transition">
+                        <h3 class="text-xl font-semibold mb-2">Advanced Encryption</h3>
+                        <p class="text-gray-700">We use state-of-the-art encryption to safeguard your documents.</p>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/3 p-4">
+                    <div class="bg-white shadow-lg p-6 rounded-lg transform hover:scale-105 transition">
+                        <h3 class="text-xl font-semibold mb-2">User-Friendly Interface</h3>
+                        <p class="text-gray-700">A seamless experience designed for efficiency and ease.</p>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/3 p-4">
+                    <div class="bg-white shadow-lg p-6 rounded-lg transform hover:scale-105 transition">
+                        <h3 class="text-xl font-semibold mb-2">24/7 Support</h3>
+                        <p class="text-gray-700">Our support team is always available to assist you.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class=" mx-auto px-6 py-16 text-center  mb-10">
+        <h2 class="text-3xl font-bold">Meet Our Team</h2>
+        <div class="flex flex-wrap justify-center mt-6">
+            <div class="w-full md:w-1/4 p-4">
+                <img src="/static/assets/team1.jpg" alt="Team Member" class="rounded-full w-40 h-40 mx-auto shadow-lg">
+                <h3 class="text-xl font-semibold mt-2">Jane Doe</h3>
+                <p class="text-gray-700">CEO & Founder</p>
+            </div>
+            <div class="w-full md:w-1/4 p-4">
+                <img src="/static/assets/team2.jpg" alt="Team Member" class="rounded-full w-40 h-40 mx-auto shadow-lg">
+                <h3 class="text-xl font-semibold mt-2">John Smith</h3>
+                <p class="text-gray-700">CTO</p>
+            </div>
+            <div class="w-full md:w-1/4 p-4">
+                <img src="/static/assets/team3.jpg" alt="Team Member" class="rounded-full w-40 h-40 mx-auto shadow-lg">
+                <h3 class="text-xl font-semibold mt-2">Sarah Lee</h3>
+                <p class="text-gray-700">Head of Security</p>
+            </div>
+        </div>
+    </section>
+
+  
+
+    <script>
+        gsap.from(".animate-fade-in", { opacity: 0, y: -20, duration: 1 });
+        gsap.from(".animate-slide-in", { opacity: 0, x: -50, duration: 1, delay: 0.5 });
+    </script>
+</div>
+{% endblock %}

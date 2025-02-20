@@ -11,46 +11,42 @@
 </head>
 
 <body>
-    <div class="min-h-screen bg-[#0A0F1C] text-white pt-10">
+    <div class="min-h-screen bg-[#ffffff] text-black pt-10">
         <div class="relative overflow-hidden  ">
             <div class="absolute inset-0 bg-mesh  w-[100vw]"></div>
             <nav class="badd relative z-10 container mx-auto px-6 py-1  w-[100vw]">
                 <div class="flex justify-between items-center w-[100vw] mb-10">
                     <div class="flex items-center  space-x-3">
-                        <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-xl">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-file-check w-8 h-8">
-                                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                                <path d="m9 15 2 2 4-4"></path>
-                            </svg>
-                        </div><a href="/"><span class="text-2xl font-bold">SecureDoc</span></a>
+                        <img class="w-60 h-25" src="/static/assests/udaan.png" alt="" srcset="">
+                        <!-- <a href="/"><span class="text-2xl text-orange-400 font-bold">SecureDoc</span></a> -->
                     </div>
                     <div class="hidden md:flex items-center space-x-8">
-                        <a href="/" class="hover:text-blue-400 transition-colors">Home</a>
-                        <a href="/#features" class="hover:text-blue-400 transition-colors">Features</a>
-                        <a href="/#security" class="hover:text-blue-400 transition-colors">Security</a>
+                        <a href="/" class="hover:text-orange-400 transition-colors">Home</a>
+                        <a href="/about" class="hover:text-orange-400 transition-colors">About</a>
+                        <a href="/#features" class="hover:text-orange-400 transition-colors">Features</a>
+                        <a href="/#security" class="hover:text-orange-400 transition-colors">Security</a>
+                        {% if not current_user %}
+                        <a href="/#security" class="hover:text-orange-400 transition-colors">Test Series</a>
+                        {% endif %}
                         {% if current_user %}
                         <div class="relative">
                             <button id="user-menu-btn"
-                                class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                                class="bg-white/10 px-6 py-2 rounded-lg  border border-amber-500 hover:bg-white/20 transition-colors">
                                 {{ current_user.username }}
                             </button>
                         </div>
 
                         {% else %}
                         <a href="/login"
-                            class="bg-white/10 px-6 py-2 rounded-lg hover:bg-white/20 transition-colors">Sign In</a>
+                            class="bg-white/10 px-6 py-2 transition-colors rounded-xl border border-orange-500 hover:bg-white/10">Sign In</a>
                         {% endif %}
                     </div>
                     <div class="md:hidden">
-                        <button id="menu-btn" class="text-white focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 6h16M4 12h16m-7 6h7" />
+                        <button id="menu-btn" class="text-white focus:outline-none ">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="black" viewBox="0 0 24 24" stroke="black">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
                             </svg>
+                            
                         </button>
                     </div>
                 </div>
@@ -68,8 +64,8 @@
                     <a href="/admin_create_user"
                         class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Create User</a>
                     {% elif current_user and current_user.role=='user' %}
-                    <a href="/user_files" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">All
-                        Files</a>
+                    <a href="/user_files" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">All Test 
+                        Series</a>
                     {% endif %}
                     {% if current_user %}
                     <a href="#" id="mobile-logout-link"
@@ -83,7 +79,7 @@
             </div>
         </div>
 
-        <main class="z-0 mt-20">
+        <main class="z-0 ">
             {% block content %}{% endblock %}
         </main>
         <footer class="border-t border-white/10 py-16">
@@ -91,14 +87,7 @@
                 <div class="flex flex-wrap items-center justify-between w-full">
                     <div>
                         <div class="flex items-center space-x-3 mb-6">
-                            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-xl"><svg
-                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-file-check w-6 h-6">
-                                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                                    <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                                    <path d="m9 15 2 2 4-4"></path>
-                                </svg></div><span class="text-xl font-bold">SecureDoc</span>
+                            <img src="/static/assests/udaan.png" alt="" srcset="" class="w-40 h-20">
                         </div>
                         <p class="text-gray-400">Enterprise-grade document security and watermarking solutions.</p>
                     </div>
@@ -121,10 +110,10 @@
         </footer>
     </div>
     <div id="user-menu"
-        class="hidden absolute  h-[30] top-20 right-50 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-50 overflow-visible">
+        class="hidden absolute  h-[30] top-30 right-50 mt-2 w-48 bg-white border-black border text-black rounded-lg shadow-lg z-50 overflow-visible">
         <a href="/" class="block px-4 py-2 text-sm hover:bg-gray-200">Home</a>
         {% if current_user and current_user.role == 'user' %}
-        <a href="/user_files" class="block px-4 py-2 text-sm hover:bg-gray-200">All Files</a>
+        <a href="/user_files" class="block px-4 py-2 text-sm hover:bg-gray-200">All Test Series</a>
         {% elif current_user and current_user.role == 'admin' %}
         <a href="/admin" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Admin Dashboard</a>
 
@@ -135,6 +124,9 @@
     </div>
     {% block scripts %}{% endblock %}
     <!-- <script src="https://unpkg.com/@tailwindcss/browser@4"></script> -->
+</body>
+
+</html>
     <script>
         let menuBtn = document.getElementById('menu-btn');
         let menu = document.getElementById('menu');
@@ -199,6 +191,3 @@
         }
 
     </script>
-</body>
-
-</html>
