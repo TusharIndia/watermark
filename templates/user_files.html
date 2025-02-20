@@ -10,14 +10,14 @@
     <div class="flex flex-col md:flex-row justify-center items-center mb-8 gap-4">
         <div>
             <h1 class="text-3xl font-bold mb-2 text-center">All Files </h1>
-            <p class="text-gray-400 text-center">Manage and protect your sensitive documents</p>
+            <p class="text-black text-center">Manage and protect your sensitive documents</p>
         </div>
     </div>
 
     <!-- Search Bar -->
     <div class="relative mb-8">
         <input id="search" type="text" placeholder="Search documents..." 
-            class="pl-10 bg-gray-900/50 border border-gray-700 text-white w-full p-3 rounded-md" />
+            class="pl-10 bg-white border border-orange-500 text-black w-full p-3 rounded-md" />
     </div>
 
     <!-- Documents Grid -->
@@ -32,6 +32,18 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Inject progress bar CSS -->
+<style>
+  @keyframes progress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+  }
+  .animate-progress {
+    background-color: #4299e1; /* blue-500 */
+    height: 100%;
+    animation: progress 1s linear;
+  }
+</style>
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const searchInput = document.getElementById('search');
@@ -66,7 +78,7 @@
                 const status = file.status || "Complete";
 
                 const fileElement = document.createElement("div");
-                fileElement.className = "bg-gray-900/50 rounded-lg p-4 border border-gray-800";
+                fileElement.className = "bg-white rounded-lg p-4 border border-orange-500";
                 fileElement.dataset.filename = filename.toLowerCase();
                 fileElement.innerHTML = `
                     <div class='flex items-start justify-between mb-4'>
@@ -76,9 +88,9 @@
                     </div>
                     <div class='flex items-center justify-between text-sm'>
                         <span class='text-gray-400'>${fileType}</span>
-                        <span class='text-green-500'>${status}</span>
+                        <span class='text-orange-500'>${status}</span>
                     </div>
-                    <button class="download-btn mt-3 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
+                    <button class="download-btn mt-3 w-full bg-orange-400 text-white border py-2 rounded-lg hover:bg-blue-600 transition"
                         data-filename="${filename}">
                         Download
                     </button>
@@ -99,13 +111,39 @@
 
         searchInput.addEventListener('input', searchFiles);
 
-        // Download functionality
+        // Download functionality with dynamic progress bar
         container.addEventListener('click', async (e) => {
             if (e.target.classList.contains('download-btn')) {
-                const filename = e.target.dataset.filename;
-                const response = await fetch(`/download/${filename}`);
-
+                const button = e.target;
+                button.disabled = true;
+                const originalContent = button.innerHTML;
+                // Create progress bar container and element
+                button.innerHTML = `<div class="w-full h-4 bg-gray-200 relative">
+                    <div class="progress-bar absolute left-0 top-0 h-full bg-blue-500" style="width: 0%;"></div>
+                </div>`;
+                const progressBar = button.querySelector('.progress-bar');
+                let progress = 0;
+                const interval = setInterval(() => {
+                    // Increase progress until 90%
+                    if (progress < 90) {
+                        progress++;
+                        progressBar.style.width = progress + '%';
+                    }
+                }, 100);
+                
+                const filename = button.dataset.filename;
+                let response;
+                try {
+                    response = await fetch(`/download/${filename}`);
+                } catch (error) {
+                    response = { ok: false };
+                }
+                
+                clearInterval(interval);
                 if (response.ok) {
+                    // Set progress to 100%
+                    progress = 100;
+                    progressBar.style.width = progress + '%';
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -114,8 +152,15 @@
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
+                    
+                    // Show "Done" text after completion
+                    button.innerHTML = "Done";
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.disabled = false;
+                    }, 2000);
                 } else {
-                    // Custom alert instead of default alert
+                    // On error, restore the original button state
                     const flashMessage = document.getElementById('flash-message');
                     const bgClass = 'bg-red-100 border-red-500 text-red-700';
                     flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
@@ -126,6 +171,8 @@
                     setTimeout(() => {
                         flashMessage.classList.add('hidden');
                     }, 3000);
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
                 }
             }
         });

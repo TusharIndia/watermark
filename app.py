@@ -237,8 +237,8 @@ def add_watermark(input_pdf_path, output_pdf_path, username):
     watermark_pdf = BytesIO()
     c = canvas.Canvas(watermark_pdf, pagesize=letter)
     c.setFont("Helvetica", 50)
-    c.setFillColorRGB(0.7, 0.7, 0.7, 0.3)  # Light gray with transparency
-    c.translate(300, 400)
+    c.setFillColorRGB(0.7, 0.7, 0.7, 0.4)  # Light gray with transparency
+    c.translate(300, 320)
     c.rotate(30)
     c.drawString(0, 0, username)
     c.save()
@@ -352,6 +352,9 @@ def logout():
 @app.route("/")
 def home():
     return render_template("home.html", current_user=get_current_user())
+@app.route("/about")
+def about():
+    return render_template("about.html", current_user=get_current_user())
 
 @app.route("/login")
 def login_page():

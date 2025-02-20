@@ -3,24 +3,26 @@
 {% block title %}Admin - Upload File{% endblock %}
 
 {% block content %}
-<div class="text-white">
+<div id="flash-message" class=" z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
+
+<div class="text-black">
     <div class="container mx-auto px-4 py-12 mb-[20rem]">
         <div class="max-w-6xl mx-auto">
             <h1 class="text-4xl font-bold text-center mb-6">Document Protection & Watermarking</h1>
             <p class="text-gray-400 text-lg text-center mb-8">Secure your sensitive documents with enterprise-grade watermarking.</p>
 
             <!-- Upload Section -->
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div class=" p-6 rounded-lg ">
                 <form id="upload-form" enctype="multipart/form-data" class="space-y-4">
-                    <input type="file" id="file" name="file" accept="application/pdf" required class="w-full p-2 border border-gray-700 bg-gray-700 text-white rounded-lg">
-                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">Upload</button>
+                    <input type="file" id="file" name="file" accept="application/pdf" required class="w-full p-2 border border-orange-700 bg-white text-black rounded-lg">
+                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg">Upload</button>
                 </form>
             </div>
 
             <!-- Files List -->
-            <div class="p-6 rounded-lg shadow-lg mt-8 mb-20">
-                <h2 class="text-xl font-semibold mb-4">Previously Uploaded Documents</h2>
-                <div id="admin-files" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div class="p-6 rounded-lg border border-amber-400 mt-8 mb-20 flex flex-wrap flex-col justify-center">
+                <h2 class="text-xl text-center font-semibold mb-4">Previously Uploaded Documents</h2>
+                <div id="admin-files" class="flex-wrap flex justify-center items-center gap-4">
                     <!-- List of files will load here -->
                 </div>
             </div>
@@ -39,11 +41,24 @@
         if (response.ok && result.files) {
             result.files.forEach(fileObj => {
                 const div = document.createElement('div');
-                div.className = "bg-gray-800 w-44 h-20 rounded-lg flex flex-col items-center justify-between p-2 shadow-lg";
+                div.className = "relative bg-white border border-orange-500 w-44 h-20 rounded-lg flex flex-col items-center justify-between p-2 ";
+                
+                // Update delete icon to use the provided image URL
+                const deleteIcon = document.createElement('button');
+                deleteIcon.innerHTML = '<img src="https://cdn.iconscout.com/icon/free/png-256/free-delete-icon-download-in-svg-png-gif-file-formats--remove-trash-cancel-garbage-user-interface-pack-icons-2411575.png" alt="Delete" class="w-4 h-4">';
+                deleteIcon.title = "Delete file";
+                deleteIcon.style.position = "absolute";
+                deleteIcon.style.top = "4px";
+                deleteIcon.style.right = "4px";
+                deleteIcon.style.background = "none";
+                deleteIcon.style.border = "none";
+                deleteIcon.style.cursor = "pointer";
+                deleteIcon.addEventListener('click', () => deleteFile(fileObj.filename));
+                div.appendChild(deleteIcon);
                 
                 const title = document.createElement('div');
                 title.textContent = fileObj.filename;
-                title.className = "text-white text-xs truncate w-full text-center";
+                title.className = "text-black text-xs truncate w-full text-center";
                 div.appendChild(title);
                 
                 const btnContainer = document.createElement('div');
@@ -53,7 +68,7 @@
                 const downloadBtn = document.createElement('button');
                 downloadBtn.textContent = "Download";
                 downloadBtn.title = "Download";
-                downloadBtn.className = "bg-blue-400 text-white px-2 py-1 rounded text-xs hover:bg-blue-500";
+                downloadBtn.className = "bg-orange-400 text-white px-2  py-1 rounded text-xs hover:bg-blue-500";
                 downloadBtn.addEventListener('click', () => downloadFile(fileObj.filename));
                 btnContainer.appendChild(downloadBtn);
                 
