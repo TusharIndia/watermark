@@ -14,6 +14,10 @@ import img2pdf
 import time
 import jwt  # NEW
 import hashlib  # NEW
+from concurrent.futures import ThreadPoolExecutor, as_completed  # added import
+import pandas as pd  # added import
+from email_stepup import send_email
+
 
 load_dotenv()
 app = Flask(__name__)
@@ -337,6 +341,44 @@ def admin_upload_file():
     if (current_user and current_user.get("role") == "user") or (not current_user) or (current_user.get("role") != "admin"):
         return redirect("/admin_login")
     return render_template("admin_upload_file.html", current_user=current_user)
+
+
+
+
+@app.route('/send-emails', methods=['POST'])
+def send_bulk_emails():
+    try:
+        current_user = get_current_user()
+        if not current_user or current_user.get("role") != "admin":
+            return jsonify({"error": "Only admin can upload Excel files"}), 403
+        if "excel_file" not in request.files:
+            return jsonify({"error": "No file part"}), 400
+        excel_file = request.files["excel_file"]
+        print(excel_file)
+        if excel_file.filename == "":
+            return jsonify({"error": "No selected file"}), 400
+
+        filename = secure_filename(excel_file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        print(file_path)
+        excel_file.save(file_path)
+
+
+        df = pd.read_excel(file_path)  # Load Excel data
+        df.columns = df.columns.str.lower()
+        print(df)
+
+        results = []
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(send_email, row["email"], row["username"], row["password"]) for _, row in df.iterrows()]
+            for future in as_completed(futures):
+                results.append(future.result())
+
+        os.remove(file_path)
+        return jsonify({"message": "Emails sent successfully!", "details": results})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 
 if __name__ == "__main__":
     app.run(debug=True)

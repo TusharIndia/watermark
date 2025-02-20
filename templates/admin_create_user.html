@@ -45,6 +45,10 @@
                 </div>
                 <button type="submit" class="w-full px-4 py-3 mt-6 text-white bg-orange-500 rounded-lg hover:bg-orange-600 focus:outline-none">Create Users</button>
             </form>
+            <!-- NEW: Progress container -->
+            <div id="excel-progress-container" class="hidden mt-4">
+                <progress id="excel-progress" value="0" max="100" class="w-full"></progress>
+            </div>
         </div>
     </div>
 </div>
@@ -107,23 +111,40 @@
         setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
     });
 
-    // Excel upload form submit logic (designer placeholder)
+    // Excel upload form submit logic using fetch with simulated progress bar
     document.getElementById('excel-upload-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const response = await fetch('/upload_excel', {
+        const progressContainer = document.getElementById('excel-progress-container');
+        const progressEl = document.getElementById('excel-progress');
+        progressContainer.classList.remove('hidden');
+        progressEl.value = 0;
+        let progress = 0;
+        const interval = setInterval(() => {
+            if (progress < 90) {
+                progress++;
+                progressEl.value = progress;
+            }
+        }, 100);
+        
+        const response = await fetch('/send-emails', { // API call remains unchanged
             method: 'POST',
             body: formData
         });
         const result = await response.json();
-        const flashMessage = document.getElementById('flash-message');
-        const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
-        flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
-            <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
-            <p>${response.ok ? result.message : result.error}</p>
-        </div>`;
-        flashMessage.classList.remove('hidden');
-        setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+        clearInterval(interval);
+        progressEl.value = 100;
+        setTimeout(() => {
+            progressContainer.classList.add('hidden');
+            const flashMessage = document.getElementById('flash-message');
+            const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
+            flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
+                <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
+                <p>${response.ok ? 'Email sent successfully.' : result.error}</p>
+            </div>`;
+            flashMessage.classList.remove('hidden');
+            setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+        }, 500);
     });
 </script>
 {% endblock %}
