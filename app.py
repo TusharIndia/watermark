@@ -17,6 +17,8 @@ import hashlib  # NEW
 from concurrent.futures import ThreadPoolExecutor, as_completed  # added import
 import pandas as pd  # added import
 from email_stepup import send_email
+import random
+import string
 
 
 load_dotenv()
@@ -58,51 +60,6 @@ def get_current_user():
 
 
 # Route to upload Excel file and create users
-@app.route("/upload_users", methods=["POST"])
-def upload_users():
-    current_user = request.headers.get("Admin-Token")
-    if current_user != os.getenv("ADMIN_SECRET"):
-        return jsonify({"error": "Unauthorized"}), 403
-
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    
-    file = request.files["file"]
-    filename = secure_filename(file.filename)
-    
-    if not filename.endswith(".xlsx"):
-        return jsonify({"error": "Invalid file format. Please upload an Excel file."}), 400
-
-    df = pd.read_excel(file)
-    if not {"Name", "Email ID", "Phone Number"}.issubset(df.columns):
-        return jsonify({"error": "Missing required columns in Excel file"}), 400
-
-    users_created = []
-    
-    for _, row in df.iterrows():
-
-        name, email, phone = row["Name"], row["Email ID"], row["Phone Number"]
-
-        username = email.split("@")[0]  # Generate username from email
-        password = generate_password()  # Generate random password
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        if users_collection.find_one({"email": email}):
-            continue
-            
-        
-        users_collection.insert_one({
-            "name": name,
-            "email": email,
-            "username": username,
-            "phone": phone,
-            "password": hashed_password,
-            "role": "user"
-        })
-
-        send_email(email, username, password)
-        users_created.append(email)
-
-    return jsonify({"message": f"Users created successfully: {len(users_created)}"}), 201
 
 
 @app.route("/logins", methods=["POST"])
@@ -375,6 +332,16 @@ def admin_upload_file():
 
 
 
+def generate_unique_username(base_username):
+    while True:
+        username = f"udaan_{base_username}_{random.randint(1000, 9999)}"
+        if not users_collection.find_one({"username": username}):
+            return username
+
+def generate_random_password(length=8):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(random.choice(characters) for i in range(length))
+
 @app.route('/send-emails', methods=['POST'])
 def send_bulk_emails():
     try:
@@ -384,31 +351,79 @@ def send_bulk_emails():
         if "excel_file" not in request.files:
             return jsonify({"error": "No file part"}), 400
         excel_file = request.files["excel_file"]
-        print(excel_file)
         if excel_file.filename == "":
             return jsonify({"error": "No selected file"}), 400
 
         filename = secure_filename(excel_file.filename)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
-        print(file_path)
         excel_file.save(file_path)
-
 
         df = pd.read_excel(file_path)  # Load Excel data
         df.columns = df.columns.str.lower()
-        print(df)
 
         results = []
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(send_email, row["email"], row["username"], row["password"]) for _, row in df.iterrows()]
+            futures = []
+            for _, row in df.iterrows():
+                if users_collection.find_one({"email": row["email"]}):
+                    results.append(f"Email {row['email']} already exists.")
+                    continue
+                base_username = row["email"].split("@")[0]
+                username = generate_unique_username(base_username)
+                password = generate_random_password()
+                hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+                user_data = {
+                    "name": row["name"],
+                    "email": row["email"],
+                    "username": username,
+                    "password": hashed_password,
+                    "role": "user"
+                }
+                users_collection.insert_one(user_data)  # Save user data to the database
+                futures.append(executor.submit(send_email, row["email"], username, password))
             for future in as_completed(futures):
                 results.append(future.result())
 
         os.remove(file_path)
         return jsonify({"message": "Emails sent successfully!", "details": results})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+@app.route('/create_user', methods=['POST'])
+def create_user():
+    try:
+        current_user = get_current_user()
+        if not current_user or current_user.get("role") != "admin":
+            return jsonify({"error": "Only admin can create users"}), 403
+            
+        data = request.json
+        name = data.get("name")
+        email = data.get("email")
+        base_username = email.split("@")[0]
+
+        if not all([name, email]):
+            return jsonify({"error": "All fields are required"}), 400
+
+        if users_collection.find_one({"email": email}):
+            return jsonify({"error": "Email already exists"}), 400
+            
+        password = generate_random_password()
+        username = generate_unique_username(base_username)
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        users_collection.insert_one({
+            "name": name,
+            "email": email,
+            "username": username,
+            "password": hashed_password,
+            "role": "user"
+        })
+            
+        send_email(email, username, password)
+            
+        return jsonify({"message": "User created successfully and email sent!"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
