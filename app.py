@@ -58,51 +58,6 @@ def get_current_user():
 
 
 # Route to upload Excel file and create users
-@app.route("/upload_users", methods=["POST"])
-def upload_users():
-    current_user = request.headers.get("Admin-Token")
-    if current_user != os.getenv("ADMIN_SECRET"):
-        return jsonify({"error": "Unauthorized"}), 403
-
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    
-    file = request.files["file"]
-    filename = secure_filename(file.filename)
-    
-    if not filename.endswith(".xlsx"):
-        return jsonify({"error": "Invalid file format. Please upload an Excel file."}), 400
-
-    df = pd.read_excel(file)
-    if not {"Name", "Email ID", "Phone Number"}.issubset(df.columns):
-        return jsonify({"error": "Missing required columns in Excel file"}), 400
-
-    users_created = []
-    
-    for _, row in df.iterrows():
-
-        name, email, phone = row["Name"], row["Email ID"], row["Phone Number"]
-
-        username = email.split("@")[0]  # Generate username from email
-        password = generate_password()  # Generate random password
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        if users_collection.find_one({"email": email}):
-            continue
-            
-        
-        users_collection.insert_one({
-            "name": name,
-            "email": email,
-            "username": username,
-            "phone": phone,
-            "password": hashed_password,
-            "role": "user"
-        })
-
-        send_email(email, username, password)
-        users_created.append(email)
-
-    return jsonify({"message": f"Users created successfully: {len(users_created)}"}), 201
 
 
 @app.route("/logins", methods=["POST"])
