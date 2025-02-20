@@ -1,61 +1,129 @@
 {% extends "base.html" %}
 {% block title %}Admin - Create User{% endblock %}
 {% block content %}
-<div id="flash-message" class=" z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
-
-<div class="flex justify-center pb-10 mb-10">
-    <div class="w-10/12 max-w-md p-6 bg-gray-800 rounded-2xl shadow-lg">
-        <h2 class="text-2xl font-bold text-center text-white">Create User</h2>
-        <form class="mt-6" id="create-user-form">
-            <div>
-                <label for="new-name" class="block text-gray-300">Name</label>
-                <input type="text" id="new-name" name="name" class="w-full p-3 mt-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter full name" required>
-            </div>
-            <div class="mt-4">
-                <label for="new-email" class="block text-gray-300">Email</label>
-                <input type="email" id="new-email" name="email" class="w-full p-3 mt-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter email address" required>
-            </div>
-            <div class="mt-4">
-                <label for="new-username" class="block text-gray-300">Username</label>
-                <input type="text" id="new-username" name="username" class="w-full p-3 mt-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter a username" required>
-            </div>
-            <div class="mt-4">
-                <label for="new-password" class="block text-gray-300">Password</label>
-                <input type="password" id="new-password" name="password" class="w-full p-3 mt-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter a password" required>
-            </div>
-            <button type="submit" class="w-full px-4 py-3 mt-6 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none">Create User</button>
-        </form>
+<div class=" mx-auto px-4 py-8 ">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl border border-amber-500"> <!-- increased container width -->
+        <div class="flex  justify-center items-center w-full my-5">
+                <button id="manual-tab" class="mr-5 rounded-3xl py-4 px-6 text-center border border-orange-400 bg-white text-orange-500 border-b-2 focus:outline-none">Manual Creation</button>
+                <button id="excel-tab" class="ml-5 rounded-3xl py-4 px-6 text-center border border-orange-400 bg-white text-orange-500  border-b-2 focus:outline-none">Excel Upload</button>
+        </div>
+        <!-- Tab Navigation -->
+        <!-- Manual Creation Tab -->
+        <div id="manual-content" class="p-6">
+            <h2 class="text-2xl font-bold text-center   text-orange-500 mb-4">Create User Manually</h2>
+            <form class="mt-6" id="create-user-form">
+                <div class="md:flex md:space-x-4">
+                    <div class="w-full md:w-1/2">
+                        <label for="new-name" class="block text-gray-700">Name</label>
+                        <input type="text" id="new-name" name="name" class="w-full p-3 mt-2 bg-gray-100 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter full name" required>
+                    </div>
+                    <div class="w-full md:w-1/2 mt-4 md:mt-0">
+                        <label for="new-email" class="block text-gray-700">Email</label>
+                        <input type="email" id="new-email" name="email" class="w-full p-3 mt-2 bg-gray-100 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter email address" required>
+                    </div>
+                </div>
+                <div class="md:flex md:space-x-4 mt-4">
+                    <div class="w-full md:w-1/2">
+                        <label for="new-username" class="block text-gray-700">Username</label>
+                        <input type="text" id="new-username" name="username" class="w-full p-3 mt-2 bg-gray-100 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter a username" required>
+                    </div>
+                    <div class="w-full md:w-1/2 mt-4 md:mt-0">
+                        <label for="new-password" class="block text-gray-700">Password</label>
+                        <input type="password" id="new-password" name="password" class="w-full p-3 mt-2 bg-gray-100 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter a password" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full px-4 py-3 mt-6 text-white bg-orange-500 rounded-lg hover:bg-orange-600 focus:outline-none">Create User</button>
+            </form>
+        </div>
+        <!-- Excel Upload Tab -->
+        <div id="excel-content" class="hidden p-6">
+            <h2 class="text-2xl font-bold text-center text-orange-500 mb-4">Create Users via Excel Upload</h2>
+            <form class="mt-6" id="excel-upload-form" enctype="multipart/form-data">
+                <div>
+                    <label for="excel-file" class="block text-gray-700">Select Excel File</label>
+                    <input type="file" id="excel-file" name="excel_file" accept=".xls,.xlsx" class="w-full p-3 mt-2 bg-gray-100 border border-gray-300 text-gray-900 rounded-lg focus:outline-none">
+                </div>
+                <button type="submit" class="w-full px-4 py-3 mt-6 text-white bg-orange-500 rounded-lg hover:bg-orange-600 focus:outline-none">Create Users</button>
+            </form>
+        </div>
     </div>
 </div>
+<!-- Flash message -->
+<div id="flash-message" class="z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
 {% endblock %}
 {% block scripts %}
 <script>
-   document.getElementById('create-user-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('new-name').value.trim();
-    const username = document.getElementById('new-username').value.trim();
-    const email = document.getElementById('new-email').value.trim();
-    const password = document.getElementById('new-password').value.trim();
-    
-    // Custom validation check instead of relying on native alerts
-  
-    
-    const response = await fetch('/create_user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name ,username, email, password })
+    // Updated Tab switching logic to show active state
+    const manualTab = document.getElementById('manual-tab');
+    const excelTab = document.getElementById('excel-tab');
+    const manualContent = document.getElementById('manual-content');
+    const excelContent = document.getElementById('excel-content');
+
+    manualTab.addEventListener('click', () => {
+        // Set manual tab active
+        manualTab.classList.add('bg-orange-500', 'text-white');
+        manualTab.classList.remove('bg-white', 'text-orange-500');
+        // Set excel tab inactive
+        excelTab.classList.add('bg-white', 'text-gray-500');
+        excelTab.classList.remove('bg-orange-500', 'text-white');
+        // Toggle content sections
+        manualContent.classList.remove('hidden');
+        excelContent.classList.add('hidden');
     });
-    const result = await response.json();
-    const flashMessage = document.getElementById('flash-message');
-    const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
-    flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
-        <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
-        <p>${response.ok ? result.message : result.error}</p>
-    </div>`;
-    flashMessage.classList.remove('hidden');
-    setTimeout(() => {
-        flashMessage.classList.add('hidden');
-    }, 3000);
-});
+
+    excelTab.addEventListener('click', () => {
+        // Set excel tab active
+        excelTab.classList.add('bg-orange-500', 'text-white');
+        excelTab.classList.remove('bg-white', 'text-gray-500');
+        // Set manual tab inactive
+        manualTab.classList.add('bg-white', 'text-orange-500');
+        manualTab.classList.remove('bg-orange-500', 'text-white');
+        // Toggle content sections
+        excelContent.classList.remove('hidden');
+        manualContent.classList.add('hidden');
+    });
+
+    // Existing manual form submit logic
+    document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('new-name').value.trim();
+        const username = document.getElementById('new-username').value.trim();
+        const email = document.getElementById('new-email').value.trim();
+        const password = document.getElementById('new-password').value.trim();
+        
+        const response = await fetch('/create_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, username, email, password })
+        });
+        const result = await response.json();
+        const flashMessage = document.getElementById('flash-message');
+        const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
+        flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
+            <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
+            <p>${response.ok ? result.message : result.error}</p>
+        </div>`;
+        flashMessage.classList.remove('hidden');
+        setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+    });
+
+    // Excel upload form submit logic (designer placeholder)
+    document.getElementById('excel-upload-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const response = await fetch('/upload_excel', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        const flashMessage = document.getElementById('flash-message');
+        const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
+        flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
+            <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
+            <p>${response.ok ? result.message : result.error}</p>
+        </div>`;
+        flashMessage.classList.remove('hidden');
+        setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+    });
 </script>
 {% endblock %}

@@ -32,6 +32,18 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Inject progress bar CSS -->
+<style>
+  @keyframes progress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+  }
+  .animate-progress {
+    background-color: #4299e1; /* blue-500 */
+    height: 100%;
+    animation: progress 1s linear;
+  }
+</style>
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const searchInput = document.getElementById('search');
@@ -99,13 +111,39 @@
 
         searchInput.addEventListener('input', searchFiles);
 
-        // Download functionality
+        // Download functionality with dynamic progress bar
         container.addEventListener('click', async (e) => {
             if (e.target.classList.contains('download-btn')) {
-                const filename = e.target.dataset.filename;
-                const response = await fetch(`/download/${filename}`);
-
+                const button = e.target;
+                button.disabled = true;
+                const originalContent = button.innerHTML;
+                // Create progress bar container and element
+                button.innerHTML = `<div class="w-full h-4 bg-gray-200 relative">
+                    <div class="progress-bar absolute left-0 top-0 h-full bg-blue-500" style="width: 0%;"></div>
+                </div>`;
+                const progressBar = button.querySelector('.progress-bar');
+                let progress = 0;
+                const interval = setInterval(() => {
+                    // Increase progress until 90%
+                    if (progress < 90) {
+                        progress++;
+                        progressBar.style.width = progress + '%';
+                    }
+                }, 100);
+                
+                const filename = button.dataset.filename;
+                let response;
+                try {
+                    response = await fetch(`/download/${filename}`);
+                } catch (error) {
+                    response = { ok: false };
+                }
+                
+                clearInterval(interval);
                 if (response.ok) {
+                    // Set progress to 100%
+                    progress = 100;
+                    progressBar.style.width = progress + '%';
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -114,8 +152,15 @@
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
+                    
+                    // Show "Done" text after completion
+                    button.innerHTML = "Done";
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.disabled = false;
+                    }, 2000);
                 } else {
-                    // Custom alert instead of default alert
+                    // On error, restore the original button state
                     const flashMessage = document.getElementById('flash-message');
                     const bgClass = 'bg-red-100 border-red-500 text-red-700';
                     flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
@@ -126,6 +171,8 @@
                     setTimeout(() => {
                         flashMessage.classList.add('hidden');
                     }, 3000);
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
                 }
             }
         });
