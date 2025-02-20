@@ -8,3 +8,5 @@ img2pdf
 flask-bcrypt
 python-dotenv
 PyJWT
+pandas
+requests
