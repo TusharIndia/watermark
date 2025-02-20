@@ -14,6 +14,10 @@ import img2pdf
 import time
 import jwt  # NEW
 import hashlib  # NEW
+from flask_mail import Mail, Message
+import random
+import string
+import pandas as pd
 
 load_dotenv()
 app = Flask(__name__)
@@ -29,6 +33,15 @@ client = MongoClient(os.getenv("MONGO_URI"))
 db = client.get_database("watermarkd")
 users_collection = db["users"]
 files_collection = db["files"]
+
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = os.getenv("EMAIL_SENDER")
+app.config["MAIL_PASSWORD"] = os.getenv("EMAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = os.getenv("EMAIL_SENDER")
+
+mail = Mail(app)
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
 ADMIN_PASSWORD = bcrypt.generate_password_hash(os.getenv("ADMIN_PASSWORD")).decode('utf-8')
@@ -46,30 +59,85 @@ def get_current_user():
     except jwt.ExpiredSignatureError:
         return None
 
-@app.route("/create_user", methods=["POST"])
-def create_user():
-    current_user = get_current_user()
-    if not current_user or current_user.get("username") != os.getenv("ADMIN_USERNAME"):
+def generate_password(length=8):
+    chars = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(random.choice(chars) for _ in range(length))
+
+# Function to send email using Flask-Mail
+def send_email(to_email, username, password):
+    try:
+        msg = Message("Your Account Credentials", recipients=[to_email])
+        msg.body = f"""
+        Hello,
+
+        Your account has been created.
+        Username: {username}
+        Password: {password}
+
+        Please change your password after login.
+
+        Regards,
+        Admin
+        """
+        mail.send(msg)
+        print(f"Email sent to {to_email}")
+    except Exception as e:
+        print(f"Error sending email to {to_email}: {e}")
+
+@app.route("/test_email")
+def test_email():
+    send_email("your_email@example.com", "testuser", "Test@1234")
+    return "Email sent!"
+
+
+
+# Route to upload Excel file and create users
+@app.route("/upload_users", methods=["POST"])
+def upload_users():
+    current_user = request.headers.get("Admin-Token")
+    if current_user != os.getenv("ADMIN_SECRET"):
         return jsonify({"error": "Unauthorized"}), 403
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
     
-    data = request.json
-    username = data.get("username")
-    email = data.get("email")
-    password = bcrypt.generate_password_hash(data.get("password")).decode('utf-8')
+    file = request.files["file"]
+    filename = secure_filename(file.filename)
     
-    if users_collection.find_one({"username": username}):
-        return jsonify({"error": "User already exists"}), 400
-    if users_collection.find_one({"email": email}):
-        return jsonify({"error": "User with this email already exists"}), 400
+    if not filename.endswith(".xlsx"):
+        return jsonify({"error": "Invalid file format. Please upload an Excel file."}), 400
+
+    df = pd.read_excel(file)
+    if not {"Name", "Email ID", "Phone Number"}.issubset(df.columns):
+        return jsonify({"error": "Missing required columns in Excel file"}), 400
+
+    users_created = []
     
-    users_collection.insert_one({
-        "name": data.get("name"),
-        "email": email,
-        "username": username,
-        "password": password,
-        "role": "user"
-    })
-    return jsonify({"message": "User created successfully"})
+    for _, row in df.iterrows():
+
+        name, email, phone = row["Name"], row["Email ID"], row["Phone Number"]
+
+        username = email.split("@")[0]  # Generate username from email
+        password = generate_password()  # Generate random password
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        if users_collection.find_one({"email": email}):
+            continue
+            
+        
+        users_collection.insert_one({
+            "name": name,
+            "email": email,
+            "username": username,
+            "phone": phone,
+            "password": hashed_password,
+            "role": "user"
+        })
+
+        send_email(email, username, password)
+        users_created.append(email)
+
+    return jsonify({"message": f"Users created successfully: {len(users_created)}"}), 201
+
 
 @app.route("/logins", methods=["POST"])
 def login():
