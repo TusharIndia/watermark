@@ -144,7 +144,7 @@ def upload_pdf():
 
     file.save(file_path)
     
-    files_collection.insert_one({"filename": filename, "uploaded_by": os.getenv("ADMIN_USERNAME")})
+    files_collection.insert_one({"filename": filename, "uploaded_by": os.getenv("ADMIN_USERNAME") , "demo_type":False})
     return jsonify({"message": "File uploaded successfully", "filename": filename})
 
 @app.route("/files", methods=["GET"])
@@ -152,7 +152,8 @@ def list_files():
     if not get_current_user():
         return jsonify({"error": "Unauthorized"}), 403
     # Only include files uploaded by admin
-    admin_files = list(files_collection.find({"uploaded_by": os.getenv("ADMIN_USERNAME")}, {"_id": 0, "filename": 1}))
+    admin_files = list(files_collection.find({"uploaded_by": os.getenv("ADMIN_USERNAME")}, {"_id": 0, "filename": 1 , "demo_type":1}))
+    
     return jsonify({"files": admin_files})
 
 def add_watermark(input_pdf_path, output_pdf_path, username):
@@ -228,11 +229,9 @@ def download_pdf(filename):
     
     return send_file(output_pdf_path, as_attachment=True)
 
+
 @app.route("/uploads/<filename>", methods=["GET"])
 def get_uploaded_file(filename):
-    if not get_current_user():
-        return jsonify({"error": "Unauthorized"}), 403
-    
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(file_path):
         return jsonify({"error": "File not found"}), 404
@@ -263,8 +262,26 @@ def delete_file(filename):
 
     return jsonify({"message": "File deleted successfully"})
 
+@app.route("/set_demo/<filename>", methods=["POST"])
+def set_demo_type(filename):
+    current_user = get_current_user()
+    if not current_user or current_user.get("role") != "admin":
+        return jsonify({"error": "Only admin can change demo type status"}), 403
 
+    file = files_collection.find_one({"filename": filename})
+    if not file:
+        return jsonify({"error": "File not found"}), 404
 
+    new_demo_type = not file.get("demo_type", False)
+    result = files_collection.update_one(
+        {"filename": filename},
+        {"$set": {"demo_type": new_demo_type}}
+    )
+
+    if result.matched_count == 0:
+        return jsonify({"error": "File not found"}), 404
+
+    return jsonify({"demo_type": new_demo_type,"message": f"Demo type status set to {new_demo_type} for {filename}" })
 
 @app.route("/logout", methods=["POST"])
 def logout():
@@ -424,6 +441,24 @@ def create_user():
         return jsonify({"message": "User created successfully and email sent!"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+
+@app.route("/test-series")
+def test_series():
+        current_user = get_current_user()
+        return render_template("test_series.html", current_user=current_user)
+
+
+
+@app.route("/demo-files", methods=["GET"])
+def list_demo_files():
+    try:
+        demo_files = list(files_collection.find({"demo_type": True}, {"_id": 0, "filename": 1, "demo_type": 1}))
+        return jsonify({"files": demo_files})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
