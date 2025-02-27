@@ -19,6 +19,7 @@ import pandas as pd  # added import
 from email_stepup import send_email
 import random
 import string
+import base64  # added import
 
 
 load_dotenv()
@@ -35,7 +36,7 @@ client = MongoClient(os.getenv("MONGO_URI"))
 db = client.get_database("watermarkd")
 users_collection = db["users"]
 files_collection = db["files"]
-
+testimonials_collection = db["testimonials"]
 
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
@@ -289,12 +290,71 @@ def logout():
     response.delete_cookie("token")
     return response
 
+# API to get testimonials
+@app.route("/api/testimonials", methods=["GET"])
+def get_testimonials():
+    try:
+        testimonials = list(testimonials_collection.find({}, {"_id": 0}))
+        return jsonify({"testimonials": testimonials})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# API to add a testimonial
+@app.route("/api/testimonials", methods=["POST"])
+def add_testimonial():
+    try:
+        data = request.form
+        name = data.get("name")
+        description = data.get("description")
+        image_url = data.get("image_url")
+        image_file = request.files.get("image_file")
+
+        if not all([name, description]) or (not image_url and not image_file):
+            return jsonify({"error": "All fields are required"}), 400
+
+        if image_file:
+            image = base64.b64encode(image_file.read()).decode('utf-8')
+        else:
+            image = image_url
+
+        testimonial = {
+            "name": name,
+            "image": image,
+            "description": description
+        }
+        testimonials_collection.insert_one(testimonial)
+        return jsonify({"message": "Testimonial added successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# API to delete a testimonial
+@app.route("/api/testimonials/<name>", methods=["DELETE"])
+def delete_testimonial(name):
+    try:
+        result = testimonials_collection.delete_one({"name": name})
+        if result.deleted_count == 0:
+            return jsonify({"error": "Testimonial not found"}), 404
+        return jsonify({"message": "Testimonial deleted successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/upload_testimonial")
+def upload_testimonial_page():
+    current_user = get_current_user()
+    if not current_user or current_user.get("role") != "admin":
+        return redirect("/admin_login")
+    testimonials = list(testimonials_collection.find({}, {"_id": 0}))
+    return render_template("upload_testimonial.html", current_user=current_user, testimonials=testimonials)
+
 @app.route("/")
 def home():
-    return render_template("home.html", current_user=get_current_user())
+    testimonials = list(testimonials_collection.find({}, {"_id": 0}))
+    return render_template("home.html", current_user=get_current_user(), testimonials=testimonials)
+
 @app.route("/about")
 def about():
-    return render_template("about.html", current_user=get_current_user())
+    testimonials = list(testimonials_collection.find({}, {"_id": 0}))
+    return render_template("about.html", current_user=get_current_user() , testimonials=testimonials)
 
 @app.route("/login")
 def login_page():
@@ -459,6 +519,15 @@ def list_demo_files():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
+@app.route("/admin_testimonials")
+def admin_testimonials():
+            current_user = get_current_user()
+            if not current_user or current_user.get("role") != "admin":
+                return redirect("/admin_login")
+            testimonials = list(testimonials_collection.find({}, {"_id": 0}))
+            return render_template("upload_testimonial.html", current_user=current_user, testimonials=testimonials)
 
 if __name__ == "__main__":
     app.run(debug=True)

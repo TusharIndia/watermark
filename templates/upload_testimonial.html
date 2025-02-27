@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Upload Testimonial{% endblock %}
+{% block content %}
+<div class="container mx-auto px-8 pt-10 pb-32">
+    <h2 class="text-3xl font-bold mb-6">Upload Testimonial</h2>
+    <form id="testimonial-form" class="mb-10" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label for="name" class="block text-gray-700">Name</label>
+            <input type="text" id="name" name="name" class="w-full px-4 py-2 border rounded-lg" required>
+        </div>
+        <div class="mb-4">
+            <label for="description" class="block text-gray-700">Description</label>
+            <textarea id="description" name="description" class="w-full px-4 py-2 border rounded-lg" required></textarea>
+        </div>
+        <div class="mb-4">
+            <label for="image_url" class="block text-gray-700">Image URL</label>
+            <input type="text" id="image_url" name="image_url" class="w-full px-4 py-2 border rounded-lg">
+        </div>
+        <div class="mb-4">
+            <label for="image_file" class="block text-gray-700">Or Upload Image</label>
+            <input type="file" id="image_file" name="image_file" class="w-full px-4 py-2 border rounded-lg">
+        </div>
+        <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg">Upload</button>
+    </form>
+
+    <h2 class="text-3xl font-bold mb-6">Existing Testimonials</h2>
+    <div id="testimonials-list">
+        {% if testimonials %}
+            {% for testimonial in testimonials %}
+                <div class="mb-4 p-4 border rounded-lg">
+                    <div class="flex items-center mb-2">
+                        {% if testimonial.image.startswith('https') %}
+                            <img src="{{ testimonial.image }}" alt="{{ testimonial.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500">
+                        {% else %}
+                            <img src="data:image/png;base64,{{ testimonial.image }}" alt="{{ testimonial.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500">
+                        {% endif %}
+                        <div class="ml-4">
+                            <h4 class="font-semibold">{{ testimonial.name }}</h4>
+                            <p class="text-sm text-gray-400">{{ testimonial.description }}</p>
+                        </div>
+                    </div>
+                    <button class="px-4 py-2 bg-red-500 text-white rounded-lg delete-testimonial" data-name="{{ testimonial.name }}">Delete</button>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-gray-300">No testimonials available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('testimonial-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const response = await fetch('/api/testimonials', {
+        method: 'POST',
+        body: formData
+    });
+    const result = await response.json();
+    if (response.ok) {
+        location.reload();
+    } else {
+        alert(result.error);
+    }
+});
+
+document.querySelectorAll('.delete-testimonial').forEach(button => {
+    button.addEventListener('click', async function() {
+        const name = this.getAttribute('data-name');
+        const response = await fetch(`/api/testimonials/${encodeURIComponent(name)}`, {
+            method: 'DELETE'
+        });
+        const result = await response.json();
+        if (response.ok) {
+            alert('Testimonial deleted successfully.');
+            location.reload();
+        } else {
+            alert('Failed to delete testimonial: ' + result.error);
+        }
+    });
+});
+</script>
+{% endblock %}

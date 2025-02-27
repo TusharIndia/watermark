@@ -17,14 +17,14 @@
             <nav class="badd relative z-10 container mx-auto px-0 py-1  w-[100vw]">
                 <div class="flex justify-between items-center w-[100vw] mb-2">
                     <div class="flex items-center  space-x-3">
-                        <img class="w-60 h-25" src="/static/assests/udaanlogo.png" alt="" srcset="">
+                        <img class="w-60 h-25 relative right-[2.5rem]" src="/static/assests/udaan.png" alt="" srcset="">
                         <!-- <a href="/"><span class="text-2xl text-orange-400 font-bold">SecureDoc</span></a> -->
                     </div>
                     <div class="hidden md:flex items-center space-x-8">
                         <a href="/" class="hover:text-orange-400 transition-colors">Home</a>
                         <a href="/about" class="hover:text-orange-400 transition-colors">About</a>
                         <a href="/#features" class="hover:text-orange-400 transition-colors">Features</a>
-                        <a href="/#security" class="hover:text-orange-400 transition-colors">Security</a>
+                        <a href="/#contact" class="hover:text-orange-400 transition-colors ">Contact Us</a>
                         {% if not current_user %}
                         <a href="/test-series" class="hover:text-orange-400 transition-colors">Test Series</a>
                         {% endif %}
@@ -53,26 +53,30 @@
             </nav>
             <div class="badd relative  z-10 container mx-auto px-6 py-1  w-[100vw] bg-gray-800 ">
                 <div id="menu" class="hidden md:hidden text-center   mb-10 flex-col w-full pb-5  pt-5">
-                    <a href="/" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Home</a>
-                    <a href="/#features" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Features</a>
-                    <a href="/#security" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Security</a>
+                    <a href="/" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors text-white">Home</a>
+                    <a href="/about" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors text-white">About</a>
+                    <a href="/#features" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors text-white">Features</a>
+
                     {% if current_user and current_user.role=='admin' %}
-                    <a href="/admin" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Admin
+                    <a href="/admin" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors text-white">Admin
                         Dashboard</a>
-                    <a href="/admin_upload" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Upload
+                    <a href="/admin_upload" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors text-white">Upload
                         File</a>
                     <a href="/admin_create_user"
-                        class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">Create User</a>
+                        class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors text-white">Create User</a>
+                    <a href="/admin_testimonials"    class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors text-white">Admin testimonials</a>
+
                     {% elif current_user and current_user.role=='user' %}
-                    <a href="/user_files" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors">All Test 
+                    <a href="/user_files" class="block py-2 px-4 text-lg hover:text-blue-400 transition-colors text-white">All Test 
                         Series</a>
                     {% endif %}
+                    <a href="/#contact" class="hover:text-orange-400 transition-colors mb-4 text-white">Contact Us</a>
                     {% if current_user %}
                     <a href="#" id="mobile-logout-link"
-                        class="block py-2 px-4 text-lg bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Logout</a>
+                        class="block py-2 px-4 text-lg bg-white/10 rounded-lg hover:bg-white/20 transition-colors mt-4 text-white">Logout</a>
                     {% else %}
                     <a href="/login"
-                        class="block py-2 px-4 text-lg bg-white/10 rounded-lg hover:bg-white/20 transition-colors">Sign
+                        class="block py-2 px-4 text-lg bg-white/10 rounded-lg hover:bg-white/20 transition-colors text-white mt-4">Sign
                         In</a>
                     {% endif %}
                 </div>
@@ -85,11 +89,11 @@
         <footer class="border-t border-white/10 py-16">
             <div class="container mx-auto px-6">
                 <div class="flex flex-wrap items-center justify-between w-full">
-                    <div>
+                    <div class="lg:w-1/2">
                         <div class="flex items-center space-x-3 mb-6">
                             <img src="/static/assests/udaan.png" alt="" srcset="" class="w-40 h-20">
                         </div>
-                        <p class="text-gray-400">Enterprise-grade document security and watermarking solutions.</p>
+                        <p class="text-gray-400">We provide UPSC related free guidance, mentorship, topper strategy sessions, one to one with toppers, etc. as a part of free guidance in all the 3 spheres of Civil Services Examination conducted by UPSC, be it Prelims, Mains or Interview.</p>
                     </div>
                     
                     <div class="mt-4 mr-10">
@@ -99,23 +103,24 @@
                             </li>
                          
                             <li><a href="/#features" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                            <li><a href="/#security" class="text-gray-400 hover:text-white transition-colors">Security</a></li>
+                            <li><a href="/#contact" class="text-gray-400 hover:text-white transition-colors mb-4">Contact Us</a></li>
                         </ul>
                     </div>
                 </div>
                 <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
-                    <div class="text-gray-400 mb-4 md:mb-0">© 2024 SecureDoc. All rights reserved.</div>
+                    <div class="text-gray-400 mb-4 md:mb-0">© 2025 Udaan By Robot. All rights reserved.</div>
                     
             </div>
         </footer>
     </div>
     <div id="user-menu"
-        class="hidden absolute  h-[30] top-30 right-50 mt-2 w-48 bg-white border-black border text-black rounded-lg shadow-lg z-50 overflow-visible">
+        class="hidden absolute  h-[30] top-30 lg:right-[10rem] right-[5rem] mt-2 w-48 bg-white border-black border text-black rounded-lg shadow-lg z-50 overflow-visible">
         <a href="/" class="block px-4 py-2 text-sm hover:bg-gray-200">Home</a>
         {% if current_user and current_user.role == 'user' %}
         <a href="/user_files" class="block px-4 py-2 text-sm hover:bg-gray-200">All Test Series</a>
         {% elif current_user and current_user.role == 'admin' %}
         <a href="/admin" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Admin Dashboard</a>
+        <a href="/admin_testimonials" class="block py-2 px-4 text-sm hover:text-blue-400 transition-colors">Admin testimonials</a>
 
         <a href="/admin_upload" class="block px-4 py-2 text-sm hover:bg-gray-200">Upload File</a>
         <a href="/admin_create_user" class="block px-4 py-2 text-sm hover:bg-gray-200">Create User</a>
