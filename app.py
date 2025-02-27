@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, send_file, jsonify, render_template, redirect
+from flask import Flask, request, send_file, jsonify, render_template, redirect , after_this_request, jsonify
 from werkzeug.utils import secure_filename
 from pymongo import MongoClient
 from PyPDF2 import PdfReader, PdfWriter
@@ -20,9 +20,9 @@ from email_stepup import send_email
 import random
 import string
 import base64  # added import
+import threading
 
-
-load_dotenv()
+load_dotenv(override=True)
 app = Flask(__name__)
 app.secret_key =  os.getenv("SECRET_KEY")
 bcrypt = Bcrypt(app)
@@ -39,8 +39,10 @@ files_collection = db["files"]
 testimonials_collection = db["testimonials"]
 
 
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
-ADMIN_PASSWORD = bcrypt.generate_password_hash(os.getenv("ADMIN_PASSWORD")).decode('utf-8')
+ADMIN_USERNAME = os.getenv("ADMIN_NAME")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASS")
+# if not users_collection.find_one({"username": ADMIN_USERNAME}):
+#     users_collection.insert_one({"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD, "role": "admin"})
 
 # Helper to get current user from JWT cookie
 def get_current_user():
@@ -59,6 +61,8 @@ def get_current_user():
 
 
 # Route to upload Excel file and create users
+
+
 @app.route("/logins", methods=["POST"])
 def login():
     data = request.json
@@ -92,8 +96,9 @@ def admlogin():
     data = request.json
     username = data.get("username")
     password = data.get("password")
-   
-    if username == ADMIN_USERNAME and bcrypt.check_password_hash(ADMIN_PASSWORD, password):
+    print(ADMIN_USERNAME , ADMIN_PASSWORD)
+    print(username ,  password)
+    if username == ADMIN_USERNAME and ADMIN_PASSWORD==password:
         if get_current_user():
             return jsonify({"error": "Already logged in"}), 400
         token = jwt.encode({
@@ -206,29 +211,46 @@ def add_watermark(input_pdf_path, output_pdf_path, username):
         os.remove(img)
     os.rmdir(temp_dir)
 
+
+
+def delete_file_later(file_path, delay=20):
+    """Deletes the file after a delay to avoid Windows lock issues."""
+    def delayed_deletion():
+        time.sleep(delay)
+        try:
+            os.remove(file_path)
+            print(f"Deleted file: {file_path}")
+        except Exception as e:
+            print(f"Error deleting file: {e}")
+    
+    threading.Thread(target=delayed_deletion, daemon=True).start()
+
+
 @app.route("/download/<filename>", methods=["GET"])
 def download_pdf(filename):
     current_user = get_current_user()
     if not current_user or current_user.get("role") != "user":
         return jsonify({"error": "Unauthorized"}), 403
-    
+
     input_pdf_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(input_pdf_path):
         return jsonify({"error": "File not found"}), 404
-    
+
     output_pdf_path = os.path.join(WATERMARKED_FOLDER, f"{current_user['username']}_{filename}")
     add_watermark(input_pdf_path, output_pdf_path, current_user['username'])
+
+    response = send_file( output_pdf_path, as_attachment=True)
     
-    response = send_file(output_pdf_path, as_attachment=True)
-    
-    @response.call_on_close
-    def remove_file():
-        try:
-            os.remove(output_pdf_path)
-        except Exception as e:
-            print(f"Error deleting file: {e}")
-    
+    # 🔄 Delay deletion in a separate thread
+    @after_this_request
+    def remove_file(response):
+        delete_file_later(output_pdf_path)  # Wait 2 minutes before deleting
+        return response
+
     return response
+
+    
+
 
 
 @app.route("/uploads/<filename>", methods=["GET"])

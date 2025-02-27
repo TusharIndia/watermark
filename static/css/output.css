@@ -551,6 +551,12 @@
   .right-\[2\.5rem\] {
     right: 2.5rem;
   }
+  .right-\[3rem\] {
+    right: 3rem;
+  }
+  .right-\[4rem\] {
+    right: 4rem;
+  }
   .right-\[5rem\] {
     right: 5rem;
   }
@@ -692,8 +698,14 @@
   .ml-4 {
     margin-left: calc(var(--spacing) * 4);
   }
+  .ml-5 {
+    margin-left: calc(var(--spacing) * 5);
+  }
   .ml-10 {
     margin-left: calc(var(--spacing) * 10);
+  }
+  .ml-15 {
+    margin-left: calc(var(--spacing) * 15);
   }
   .block {
     display: block;
@@ -1636,6 +1648,11 @@
     @media (width >= 48rem) {
       font-size: var(--text-5xl);
       line-height: var(--tw-leading, var(--text-5xl--line-height));
+    }
+  }
+  .lg\:right-\[5rem\] {
+    @media (width >= 64rem) {
+      right: 5rem;
     }
   }
   .lg\:right-\[10rem\] {
