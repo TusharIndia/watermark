@@ -41,7 +41,7 @@
         if (response.ok && result.files) {
             result.files.forEach(fileObj => {
                 const div = document.createElement('div');
-                div.className = "relative bg-white border border-orange-500 w-44 h-20 rounded-lg flex flex-col items-center justify-between p-2 ";
+                div.className = "relative bg-white border border-orange-500 w-56 h-20 rounded-lg flex flex-col items-center justify-between p-2 ";
                 
                 // Update delete icon to use the provided image URL
                 const deleteIcon = document.createElement('button');
@@ -68,7 +68,7 @@
                 const downloadBtn = document.createElement('button');
                 downloadBtn.textContent = "Download";
                 downloadBtn.title = "Download";
-                downloadBtn.className = "bg-orange-400 text-white px-2  py-1 rounded text-xs hover:bg-blue-500";
+                downloadBtn.className = "bg-orange-400 text-white px-2 py-1 rounded text-xs hover:bg-blue-500";
                 downloadBtn.addEventListener('click', () => downloadFile(fileObj.filename));
                 btnContainer.appendChild(downloadBtn);
                 
@@ -79,6 +79,15 @@
                 viewBtn.className = "bg-green-400 text-white px-2 py-1 rounded text-xs hover:bg-green-500";
                 viewBtn.addEventListener('click', () => viewFile(fileObj.filename));
                 btnContainer.appendChild(viewBtn);
+
+                // Add small "Make Demo" button
+                const demoBtn = document.createElement('button');
+                demoBtn.textContent = fileObj.demo_type ? "Already Demo" : "Make Demo";
+                demoBtn.title = "Make Demo";
+                demoBtn.className = "bg-yellow-400 text-white px-2 py-1 rounded text-xs hover:bg-yellow-500";
+               
+                demoBtn.addEventListener('click', () => makeDemo(fileObj.filename, demoBtn));
+                btnContainer.appendChild(demoBtn);
                 
                 div.appendChild(btnContainer);
                 container.appendChild(div);
@@ -112,6 +121,33 @@
     function viewFile(filename) {
         const url = '/uploads/' + encodeURIComponent(filename);
         window.open(url, '_blank');
+    }
+
+    async function deleteFile(filename) {
+        const url = '/delete/' + encodeURIComponent(filename);
+        try {
+            const response = await fetch(url, { method: 'DELETE' });
+            const result = await response.json();
+            alert(response.ok ? result.message : result.error);
+            if (response.ok) loadFiles();
+        } catch (error) {
+            alert('Delete failed');
+        }
+    }
+
+    async function makeDemo(filename, button) {
+        const url = '/set_demo/' + encodeURIComponent(filename);
+        try {
+            const response = await fetch(url, { method: 'POST' });
+            const result = await response.json();
+            alert(response.ok ? result.message : result.error);
+            if (response.ok) {
+                
+                button.textContent = result.demo_type ? "Already Demo" : "Make Demo";
+            }
+        } catch (error) {
+            alert('Failed to set demo type');
+        }
     }
     
     document.getElementById('upload-form').addEventListener('submit', async (e) => {

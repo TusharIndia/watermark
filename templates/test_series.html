@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Test Series{% endblock %}
+{% block content %}
+<div class="flex flex-col md:flex-row justify-center py-10 mb-20 gap-4 bg-orange-500 text-white">
+    <div>
+        <h1 class="text-3xl font-bold mb-2 text-center text-white">Test Series</h1>
+        <p class="text-black text-center text-white">Access some demo test series files below. Unlock more by clicking the button at the bottom.</p>
+    </div>
+</div>
+<div class="container mx-auto px-4 py-8">
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr>
+                    <th class="py-2 px-4 border-b text-left">Serial No</th>
+                    <th class="py-2 px-4 border-b text-left">Filename</th>
+                    <th class="py-2 px-4 border-b text-left">Action</th>
+                </tr>
+            </thead>
+            <tbody id="documents-container">
+                <!-- Files will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
+    <div class="text-center my-20">
+        <button class="bg-blue-500 text-white px-4 py-2 cursor-pointer rounded hover:bg-blue-600">Unlock More</button>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        const container = document.getElementById("documents-container");
+        let filesData = [];
+
+        async function loadFiles() {
+            try {
+                const response = await fetch("/demo-files");
+                const result = await response.json();
+                console.log(result)
+                filesData = result.files || [];
+                renderFiles(filesData.filter(file => file.demo_type));
+            } catch (error) {
+                console.error("Failed to load files:", error);
+            }
+        }
+
+        function renderFiles(files) {
+            container.innerHTML = "";
+            if (files.length === 0) {
+                container.innerHTML = "<tr><td colspan='3' class='text-gray-400 text-center py-4'>No demo test series files found.</td></tr>";
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            files.forEach((file, index) => {
+                const filename = file.filename || "Unknown File";
+                const serialNo = index + 1;
+
+                const fileElement = document.createElement("tr");
+                fileElement.dataset.filename = filename.toLowerCase();
+                fileElement.innerHTML = `
+                    <td class='py-2 px-4 border-b text-left'>${serialNo}</td>
+                    <td class='py-2 px-4 border-b text-left text-black'>${filename}</td>
+                    <td class='py-2 px-4 border-b text-left italic text-red-500 cursor-pointer'>Download</td>
+                `;
+                fragment.appendChild(fileElement);
+            });
+
+            container.appendChild(fragment);
+        }
+
+        container.addEventListener('click', async (e , filename) => {
+            if (e.target.classList.contains('italic')) {
+                const filename = e.target.closest('tr').dataset.filename;
+                console.log(filename)
+                const url = '/uploads/' + (filename);
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(downloadUrl);
+                    } else {
+                        alert("Download failed");
+                    }
+                } catch (error) {
+                    alert("Download failed");
+                }
+            }
+        });
+
+        loadFiles();
+    });
+</script>
+{% endblock %}
