@@ -95,24 +95,18 @@ def admlogin():
     data = request.json
     username = data.get("username")
     password = data.get("password")
-    user = users_collection.find_one({"username": username})
-    
-    if user and bcrypt.check_password_hash(user["password"], password):
+    if username == ADMIN_USERNAME and bcrypt.check_password_hash(ADMIN_PASSWORD, password):
         if get_current_user():
             return jsonify({"error": "Already logged in"}), 400
-        if user.get("role") == "user":
-            return jsonify({"error": "Invalid credentials"}), 401
         token = jwt.encode({
-            "username": user["username"],
-            "role": user.get("role", "admin")
+            "username": ADMIN_USERNAME,
+            "role": "admin"
         }, app.secret_key, algorithm="HS256")
         user_data = {
-            "username": user["username"],
-            "role": user.get("role", "admin"),
-            "name": user.get("name"),
-            "email": user.get("email")
+            "username": ADMIN_USERNAME,
+            "role": "admin"
         }
-        response = jsonify({"message": "Login successful", "data": user_data, "role": user.get("role"), "token": token})
+        response = jsonify({"message": "Login successful", "data": user_data, "role": "admin", "token": token})
         response.set_cookie("token", token)
         return response
     return jsonify({"error": "Invalid credentials"}), 401
