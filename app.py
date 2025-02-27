@@ -40,9 +40,9 @@ testimonials_collection = db["testimonials"]
 
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
-ADMIN_PASSWORD = bcrypt.generate_password_hash(os.getenv("ADMIN_PASSWORD")).decode('utf-8')
-if not users_collection.find_one({"username": ADMIN_USERNAME}):
-    users_collection.insert_one({"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD, "role": "admin"})
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+# if not users_collection.find_one({"username": ADMIN_USERNAME}):
+#     users_collection.insert_one({"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD, "role": "admin"})
 
 # Helper to get current user from JWT cookie
 def get_current_user():
@@ -96,7 +96,9 @@ def admlogin():
     data = request.json
     username = data.get("username")
     password = data.get("password")
-    if username == ADMIN_USERNAME and bcrypt.check_password_hash(ADMIN_PASSWORD, password):
+    print(ADMIN_USERNAME , ADMIN_PASSWORD)
+    print(username ,  password)
+    if username == ADMIN_USERNAME and ADMIN_PASSWORD==password:
         if get_current_user():
             return jsonify({"error": "Already logged in"}), 400
         token = jwt.encode({
