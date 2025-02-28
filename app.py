@@ -1,7 +1,7 @@
 import os
-from flask import Flask, request, send_file, jsonify, render_template, redirect , after_this_request, jsonify
+from flask import Flask, request, send_file, jsonify, render_template, redirect, after_this_request
 from werkzeug.utils import secure_filename
-from pymongo import MongoClient
+import mysql.connector
 from PyPDF2 import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -12,19 +12,19 @@ import fitz  # PyMuPDF
 from PIL import Image
 import img2pdf
 import time
-import jwt  # NEW
-import hashlib  # NEW
-from concurrent.futures import ThreadPoolExecutor, as_completed  # added import
-import pandas as pd  # added import
+import jwt
+import hashlib
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import pandas as pd
 from email_stepup import send_email
 import random
 import string
-import base64  # added import
+import base64
 import threading
 
 load_dotenv(override=True)
 app = Flask(__name__)
-app.secret_key =  os.getenv("SECRET_KEY")
+app.secret_key = os.getenv("SECRET_KEY")
 bcrypt = Bcrypt(app)
 
 UPLOAD_FOLDER = "uploads"
@@ -32,17 +32,19 @@ WATERMARKED_FOLDER = "watermarked_pdfs"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(WATERMARKED_FOLDER, exist_ok=True)
 
-client = MongoClient(os.getenv("MONGO_URI"))
-db = client.get_database("watermarkd")
-users_collection = db["users"]
-files_collection = db["files"]
-testimonials_collection = db["testimonials"]
+# MySQL connection
+db_config = {
+    "host": "srv1824.hstgr.io",
+    "user": "u145695899_UdaanByRobot",
+    "password": "UdaanByRobot2025Upsc",
+    "database": "u145695899_Udaan"
+}
 
+def get_db_connection():
+    return mysql.connector.connect(**db_config)
 
 ADMIN_USERNAME = os.getenv("ADMIN_NAME")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASS")
-# if not users_collection.find_one({"username": ADMIN_USERNAME}):
-#     users_collection.insert_one({"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD, "role": "admin"})
 
 # Helper to get current user from JWT cookie
 def get_current_user():
@@ -55,23 +57,19 @@ def get_current_user():
     except jwt.ExpiredSignatureError:
         return None
 
-
-
-
-
-
-# Route to upload Excel file and create users
-
-
 @app.route("/logins", methods=["POST"])
 def login():
     data = request.json
     username = data.get("username")
     password = data.get("password")
-    user = users_collection.find_one({"username": username})
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+    conn.close()
     
     if user and bcrypt.check_password_hash(user["password"], password):
-        # If a valid token already exists, reject duplicate logins
         if get_current_user():
             return jsonify({"error": "Already logged in"}), 400
         if user.get("role") == "admin":
@@ -86,7 +84,7 @@ def login():
             "name": user.get("name"),
             "email": user.get("email")
         }
-        response = jsonify({"message": "Login successful", "data": user_data, "role": user.get("role"), "token": token})
+        response = jsonify({"message": "Login successful", "data": user_data, "role": user["role"], "token": token})
         response.set_cookie("token", token)
         return response
     return jsonify({"error": "Invalid credentials"}), 401
@@ -96,9 +94,7 @@ def admlogin():
     data = request.json
     username = data.get("username")
     password = data.get("password")
-    print(ADMIN_USERNAME , ADMIN_PASSWORD)
-    print(username ,  password)
-    if username == ADMIN_USERNAME and ADMIN_PASSWORD==password:
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
         if get_current_user():
             return jsonify({"error": "Already logged in"}), 400
         token = jwt.encode({
@@ -129,11 +125,10 @@ def upload_pdf():
     filename = secure_filename(file.filename)
     file_path = os.path.join(UPLOAD_FOLDER, filename)
 
-    # Check if file already exists with same name and content
     if os.path.exists(file_path):
         new_contents = file.read()
         new_hash = hashlib.md5(new_contents).hexdigest()
-        file.seek(0)  # reset file pointer
+        file.seek(0)
         with open(file_path, "rb") as existing_file:
             existing_hash = hashlib.md5(existing_file.read()).hexdigest()
         if new_hash == existing_hash:
@@ -141,24 +136,38 @@ def upload_pdf():
 
     file.save(file_path)
     
-    files_collection.insert_one({"filename": filename, "uploaded_by": os.getenv("ADMIN_USERNAME") , "demo_type":False})
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO files (filename, uploaded_by, demo_type) VALUES (%s, %s, %s)",
+        (filename, os.getenv("ADMIN_USERNAME"), False)
+    )
+    conn.commit()
+    conn.close()
     return jsonify({"message": "File uploaded successfully", "filename": filename})
 
 @app.route("/files", methods=["GET"])
 def list_files():
     if not get_current_user():
         return jsonify({"error": "Unauthorized"}), 403
-    # Only include files uploaded by admin
-    admin_files = list(files_collection.find({"uploaded_by": os.getenv("ADMIN_USERNAME")}, {"_id": 0, "filename": 1 , "demo_type":1}))
     
-    return jsonify({"files": admin_files})
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT filename, demo_type FROM files")  # Fetch all files
+    
+    all_files = cursor.fetchall()
+    print(all_files)  # Debugging output
+    
+    conn.close()
+    return jsonify({"files": all_files})
+
 
 def add_watermark(input_pdf_path, output_pdf_path, username):
-    # Create a watermark
     watermark_pdf = BytesIO()
     c = canvas.Canvas(watermark_pdf, pagesize=letter)
     c.setFont("Helvetica", 50)
-    c.setFillColorRGB(0.7, 0.7, 0.7, 0.4)  # Light gray with transparency
+    c.setFillColorRGB(0.7, 0.7, 0.7, 0.4)
     c.translate(300, 320)
     c.rotate(30)
     c.drawString(0, 0, username)
@@ -168,7 +177,6 @@ def add_watermark(input_pdf_path, output_pdf_path, username):
     watermark_reader = PdfReader(watermark_pdf)
     watermark_page = watermark_reader.pages[0]
 
-    # Read the original PDF
     reader = PdfReader(input_pdf_path)
     writer = PdfWriter()
 
@@ -177,11 +185,9 @@ def add_watermark(input_pdf_path, output_pdf_path, username):
         writer.add_page(page)
 
     temp_pdf_path = output_pdf_path.replace(".pdf", "_temp.pdf")
-
     with open(temp_pdf_path, "wb") as temp_pdf:
         writer.write(temp_pdf)
 
-    # Convert watermarked PDF to images using PyMuPDF
     doc = fitz.open(temp_pdf_path)
     images = []
     temp_dir = "temp_images"
@@ -189,21 +195,20 @@ def add_watermark(input_pdf_path, output_pdf_path, username):
 
     for page_num in range(len(doc)):
         img_path = os.path.join(temp_dir, f"page_{page_num}.png")
-        pix = doc[page_num].get_pixmap()  # Convert page to an image
+        pix = doc[page_num].get_pixmap()
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         img.save(img_path, "PNG")
         images.append(img_path)
 
     doc.close()
 
-    # Convert images back to a non-editable PDF
     with open(output_pdf_path, "wb") as final_pdf:
         final_pdf.write(img2pdf.convert(images))
 
     time.sleep(1)
 
     try:
-        os.remove(temp_pdf_path)  # Delete temp PDF after closing it
+        os.remove(temp_pdf_path)
     except PermissionError:
         print(f"Warning: Unable to delete {temp_pdf_path}, skipping...")
 
@@ -211,10 +216,7 @@ def add_watermark(input_pdf_path, output_pdf_path, username):
         os.remove(img)
     os.rmdir(temp_dir)
 
-
-
 def delete_file_later(file_path, delay=20):
-    """Deletes the file after a delay to avoid Windows lock issues."""
     def delayed_deletion():
         time.sleep(delay)
         try:
@@ -222,9 +224,7 @@ def delete_file_later(file_path, delay=20):
             print(f"Deleted file: {file_path}")
         except Exception as e:
             print(f"Error deleting file: {e}")
-    
     threading.Thread(target=delayed_deletion, daemon=True).start()
-
 
 @app.route("/download/<filename>", methods=["GET"])
 def download_pdf(filename):
@@ -239,50 +239,44 @@ def download_pdf(filename):
     output_pdf_path = os.path.join(WATERMARKED_FOLDER, f"{current_user['username']}_{filename}")
     add_watermark(input_pdf_path, output_pdf_path, current_user['username'])
 
-    response = send_file( output_pdf_path, as_attachment=True)
+    response = send_file(output_pdf_path, as_attachment=True)
     
-    # 🔄 Delay deletion in a separate thread
     @after_this_request
     def remove_file(response):
-        delete_file_later(output_pdf_path)  # Wait 2 minutes before deleting
+        delete_file_later(output_pdf_path)
         return response
 
     return response
-
-    
-
-
 
 @app.route("/uploads/<filename>", methods=["GET"])
 def get_uploaded_file(filename):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(file_path):
         return jsonify({"error": "File not found"}), 404
-    
     return send_file(file_path)
 
 @app.route("/delete/<filename>", methods=["DELETE"])
-def delete_file(filename):
+def delete_file():
     current_user = get_current_user()
     if not current_user or current_user.get("role") != "admin":
         return jsonify({"error": "Unauthorized"}), 403
 
-    # Delete file from the uploads folder
-    
+    filename = request.args.get("filename")
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if os.path.exists(file_path):
         try:
             os.remove(file_path)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    else:
-        return jsonify({"error": "File not found in uploads"}), 404
 
-    # Delete file record from the database
-    result = files_collection.delete_one({"filename": filename})
-    if result.deleted_count == 0:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM files WHERE filename = %s", (filename,))
+    conn.commit()
+    if cursor.rowcount == 0:
+        conn.close()
         return jsonify({"error": "File record not found in database"}), 404
-
+    conn.close()
     return jsonify({"message": "File deleted successfully"})
 
 @app.route("/set_demo/<filename>", methods=["POST"])
@@ -291,20 +285,22 @@ def set_demo_type(filename):
     if not current_user or current_user.get("role") != "admin":
         return jsonify({"error": "Only admin can change demo type status"}), 403
 
-    file = files_collection.find_one({"filename": filename})
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT demo_type FROM files WHERE filename = %s", (filename,))
+    file = cursor.fetchone()
     if not file:
+        conn.close()
         return jsonify({"error": "File not found"}), 404
 
-    new_demo_type = not file.get("demo_type", False)
-    result = files_collection.update_one(
-        {"filename": filename},
-        {"$set": {"demo_type": new_demo_type}}
+    new_demo_type = not file["demo_type"]
+    cursor.execute(
+        "UPDATE files SET demo_type = %s WHERE filename = %s",
+        (new_demo_type, filename)
     )
-
-    if result.matched_count == 0:
-        return jsonify({"error": "File not found"}), 404
-
-    return jsonify({"demo_type": new_demo_type,"message": f"Demo type status set to {new_demo_type} for {filename}" })
+    conn.commit()
+    conn.close()
+    return jsonify({"demo_type": new_demo_type, "message": f"Demo type status set to {new_demo_type} for {filename}"})
 
 @app.route("/logout", methods=["POST"])
 def logout():
@@ -312,16 +308,18 @@ def logout():
     response.delete_cookie("token")
     return response
 
-# API to get testimonials
 @app.route("/api/testimonials", methods=["GET"])
 def get_testimonials():
     try:
-        testimonials = list(testimonials_collection.find({}, {"_id": 0}))
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT name, image, description FROM testimonials")
+        testimonials = cursor.fetchall()
+        conn.close()
         return jsonify({"testimonials": testimonials})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# API to add a testimonial
 @app.route("/api/testimonials", methods=["POST"])
 def add_testimonial():
     try:
@@ -339,23 +337,29 @@ def add_testimonial():
         else:
             image = image_url
 
-        testimonial = {
-            "name": name,
-            "image": image,
-            "description": description
-        }
-        testimonials_collection.insert_one(testimonial)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO testimonials (name, image, description) VALUES (%s, %s, %s)",
+            (name, image, description)
+        )
+        conn.commit()
+        conn.close()
         return jsonify({"message": "Testimonial added successfully"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# API to delete a testimonial
 @app.route("/api/testimonials/<name>", methods=["DELETE"])
 def delete_testimonial(name):
     try:
-        result = testimonials_collection.delete_one({"name": name})
-        if result.deleted_count == 0:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM testimonials WHERE name = %s", (name,))
+        conn.commit()
+        if cursor.rowcount == 0:
+            conn.close()
             return jsonify({"error": "Testimonial not found"}), 404
+        conn.close()
         return jsonify({"message": "Testimonial deleted successfully"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -365,18 +369,30 @@ def upload_testimonial_page():
     current_user = get_current_user()
     if not current_user or current_user.get("role") != "admin":
         return redirect("/admin_login")
-    testimonials = list(testimonials_collection.find({}, {"_id": 0}))
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT name, image, description FROM testimonials")
+    testimonials = cursor.fetchall()
+    conn.close()
     return render_template("upload_testimonial.html", current_user=current_user, testimonials=testimonials)
 
 @app.route("/")
 def home():
-    testimonials = list(testimonials_collection.find({}, {"_id": 0}))
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT name, image, description FROM testimonials")
+    testimonials = cursor.fetchall()
+    conn.close()
     return render_template("home.html", current_user=get_current_user(), testimonials=testimonials)
 
 @app.route("/about")
 def about():
-    testimonials = list(testimonials_collection.find({}, {"_id": 0}))
-    return render_template("about.html", current_user=get_current_user() , testimonials=testimonials)
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT name, image, description FROM testimonials")
+    testimonials = cursor.fetchall()
+    conn.close()
+    return render_template("about.html", current_user=get_current_user(), testimonials=testimonials)
 
 @app.route("/login")
 def login_page():
@@ -387,8 +403,6 @@ def login_page():
         elif user.get("role") == "admin":
             return redirect("/admin")
     return render_template("login.html", current_user=None)
-
-
 
 @app.route("/admin_login")
 def admin_login_page():
@@ -428,14 +442,16 @@ def admin_upload_file():
         return redirect("/admin_login")
     return render_template("admin_upload_file.html", current_user=current_user)
 
-
-
-
 def generate_unique_username(base_username):
     while True:
         username = f"udaan_{base_username}_{random.randint(1000, 9999)}"
-        if not users_collection.find_one({"username": username}):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM users WHERE username = %s", (username,))
+        if cursor.fetchone()[0] == 0:
+            conn.close()
             return username
+        conn.close()
 
 def generate_random_password(length=8):
     characters = string.ascii_letters + string.digits + string.punctuation
@@ -457,35 +473,35 @@ def send_bulk_emails():
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         excel_file.save(file_path)
 
-        df = pd.read_excel(file_path)  # Load Excel data
+        df = pd.read_excel(file_path)
         df.columns = df.columns.str.lower()
 
         results = []
+        conn = get_db_connection()
+        cursor = conn.cursor()
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = []
             for _, row in df.iterrows():
-                if users_collection.find_one({"email": row["email"]}):
+                cursor.execute("SELECT COUNT(*) FROM users WHERE email = %s", (row["email"],))
+                if cursor.fetchone()[0] > 0:
                     results.append(f"Email {row['email']} already exists.")
                     continue
                 base_username = row["email"].split("@")[0]
                 username = generate_unique_username(base_username)
                 password = generate_random_password()
                 hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-                user_data = {
-                    "name": row["name"],
-                    "email": row["email"],
-                    "username": username,
-                    "password": hashed_password,
-                    "role": "user"
-                }
-                users_collection.insert_one(user_data)  # Save user data to the database
+                cursor.execute(
+                    "INSERT INTO users (name, email, username, password, role) VALUES (%s, %s, %s, %s, %s)",
+                    (row["name"], row["email"], username, hashed_password, "user")
+                )
+                conn.commit()
                 futures.append(executor.submit(send_email, row["email"], username, password))
             for future in as_completed(futures):
                 results.append(future.result())
+        conn.close()
 
         os.remove(file_path)
         return jsonify({"message": "Emails sent successfully!", "details": results})
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -504,52 +520,56 @@ def create_user():
         if not all([name, email]):
             return jsonify({"error": "All fields are required"}), 400
 
-        if users_collection.find_one({"email": email}):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM users WHERE email = %s", (email,))
+        if cursor.fetchone()[0] > 0:
+            conn.close()
             return jsonify({"error": "Email already exists"}), 400
             
         password = generate_random_password()
         username = generate_unique_username(base_username)
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        users_collection.insert_one({
-            "name": name,
-            "email": email,
-            "username": username,
-            "password": hashed_password,
-            "role": "user"
-        })
+        cursor.execute(
+            "INSERT INTO users (name, email, username, password, role) VALUES (%s, %s, %s, %s, %s)",
+            (name, email, username, hashed_password, "user")
+        )
+        conn.commit()
+        conn.close()
             
         send_email(email, username, password)
-            
         return jsonify({"message": "User created successfully and email sent!"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-
 
 @app.route("/test-series")
 def test_series():
-        current_user = get_current_user()
-        return render_template("test_series.html", current_user=current_user)
-
-
+    current_user = get_current_user()
+    return render_template("test_series.html", current_user=current_user)
 
 @app.route("/demo-files", methods=["GET"])
 def list_demo_files():
     try:
-        demo_files = list(files_collection.find({"demo_type": True}, {"_id": 0, "filename": 1, "demo_type": 1}))
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT filename, demo_type FROM files WHERE demo_type = TRUE")
+        demo_files = cursor.fetchall()
+        conn.close()
         return jsonify({"files": demo_files})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
 @app.route("/admin_testimonials")
 def admin_testimonials():
-            current_user = get_current_user()
-            if not current_user or current_user.get("role") != "admin":
-                return redirect("/admin_login")
-            testimonials = list(testimonials_collection.find({}, {"_id": 0}))
-            return render_template("upload_testimonial.html", current_user=current_user, testimonials=testimonials)
+    current_user = get_current_user()
+    if not current_user or current_user.get("role") != "admin":
+        return redirect("/admin_login")
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT name, image, description FROM testimonials")
+    testimonials = cursor.fetchall()
+    conn.close()
+    return render_template("upload_testimonial.html", current_user=current_user, testimonials=testimonials)
 
 if __name__ == "__main__":
     app.run(debug=True)
