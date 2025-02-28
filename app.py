@@ -256,12 +256,11 @@ def get_uploaded_file(filename):
     return send_file(file_path)
 
 @app.route("/delete/<filename>", methods=["DELETE"])
-def delete_file():
+def delete_file(filename):
     current_user = get_current_user()
     if not current_user or current_user.get("role") != "admin":
         return jsonify({"error": "Unauthorized"}), 403
 
-    filename = request.args.get("filename")
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if os.path.exists(file_path):
         try:
