@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Admin Login{% endblock %}
+
 {% block content %}
 <div id="flash-message" class=" z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
 <div class=" flex justify-center  py-10 mb-20">
@@ -30,6 +31,7 @@
     </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
     document.getElementById('admin-login-form').addEventListener('submit', async (e) => {

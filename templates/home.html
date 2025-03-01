@@ -1,56 +1,41 @@
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<div class="relative z-10 container mx-auto px-8 pt-10 pb-32  ">
+<div class="relative z-10 container mx-auto px-8 pt-10 pb-32">
     <div class="mx-auto w-full mt-10">
         <div class="flex flex-col md:flex-row w-full items-center">
             <div class="md:w-1/2 lg:text-left text-center md:text-left">
-                <h3 class="md:text-5xl font-bold mb-4 leading-tight text-4xl">UDAAN UPSC<span
-                    class="block text-gradient">CSE UPDATES- ROBOT 2.0 (@csp23info)</span></h3>
+                <h3 class="md:text-5xl font-bold mb-4 leading-tight text-4xl">UDAAN UPSC<span class="block text-gradient">CSE UPDATES- ROBOT 2.0 (@csp23info)</span></h3>
                 <p class="text-xl text-gray-500 mb-12">We provide UPSC related free guidance, mentorship, topper strategy sessions, one to one with toppers, etc. as a part of free guidance in all the 3 spheres of Civil Services Examination conducted by UPSC, be it Prelims, Mains or Interview.</p>
                 <div class="flex flex-col sm:flex-row items-center justify-start space-y-4 sm:space-y-0 sm:space-x-6">
-                    {% if current_user and current_user.role == 'admin'%}
-                    <a href="/admin_upload"
-                        class="group bg-orange-400 text-white px-8 py-4 rounded-xl flex items-center space-x-3 hover:scale-105 transition-all duration-300 shadow-lg shadow-blue-500/25">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" class="lucide lucide-file-up w-6 h-6">
+                    {% if current_user and current_user.role == 'admin' %}
+                    <a href="/admin_upload" class="group bg-orange-400 text-white px-8 py-4 rounded-xl flex items-center space-x-3 hover:scale-105 transition-all duration-300 shadow-lg shadow-blue-500/25">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-up w-6 h-6">
                             <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
                             <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
                             <path d="M12 12v6"></path>
                             <path d="m15 15-3-3-3 3"></path>
                         </svg>
-                        
-                            <span class="text-lg font-semibold">Upload File</span>
-                     
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" class="lucide lucide-arrow-right w-5 h-5 transition-transform duration-300">
+                        <span class="text-lg font-semibold">Upload File</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right w-5 h-5 transition-transform duration-300">
                             <path d="M5 12h14"></path>
                             <path d="m12 5 7 7-7 7"></path>
                         </svg>
                     </a>
                     {% else %}
-                    <a href="/test-series"
-                    class="group bg-orange-400 text-white px-8 py-4 rounded-xl flex items-center space-x-3 hover:scale-105 transition-all duration-300 shadow-lg shadow-blue-500/25">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" class="lucide lucide-file-up w-6 h-6">
-                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                        <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                        <path d="M12 12v6"></path>
-                        <path d="m15 15-3-3-3 3"></path>
-                    </svg>
-                    
+                    <a href="/test-series" class="group bg-orange-400 text-white px-8 py-4 rounded-xl flex items-center space-x-3 hover:scale-105 transition-all duration-300 shadow-lg shadow-blue-500/25">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-up w-6 h-6">
+                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                            <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                            <path d="M12 12v6"></path>
+                            <path d="m15 15-3-3-3 3"></path>
+                        </svg>
                         <span class="text-lg font-semibold">See test series</span>
-                 
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" class="lucide lucide-arrow-right w-5 h-5 transition-transform duration-300">
-                        <path d="M5 12h14"></path>
-                        <path d="m12 5 7 7-7 7"></path>
-                    </svg>
-                </a>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right w-5 h-5 transition-transform duration-300">
+                            <path d="M5 12h14"></path>
+                            <path d="m12 5 7 7-7 7"></path>
+                        </svg>
+                    </a>
                     {% endif %}
                     <a href="/about" class="px-8 py-4 rounded-xl border border-orange-500 hover:bg-white/10 transition-colors">
                         Read More
@@ -75,215 +60,173 @@
         </div>
     </div>
 </div>
-        <div class="py-14 mt-14 relative overflow-hidden bg-blue-50" id="features">
-            <div class="container mx-auto px-6">
-                <div class="text-left mb-20">
-                    <h2 class="text-5xl font-bold mb-6">Our  Initiatives</h2>
-                    <p class="text-xl text-gray-400 max-w-2xl">Important topics and themes for General Studies for both Prelims and Mains based on speculation. We are proud to announce that the same has been reflected in actual exams since the past 2 years.</p>
+<div class="py-14 mt-14 relative overflow-hidden bg-blue-50" id="features">
+    <div class="container mx-auto px-6">
+        <div class="text-left mb-20">
+            <h2 class="text-5xl font-bold mb-6">Our Initiatives</h2>
+            <p class="text-xl text-gray-400 max-w-2xl">Important topics and themes for General Studies for both Prelims and Mains based on speculation. We are proud to announce that the same has been reflected in actual exams since the past 2 years.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500 hover:border-blue-500/50 transition-colors group">
+                <div class="w-16 h-16 rounded-xl bg-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock w-8 h-8">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div
-                        class="card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500 hover:border-blue-500/50 transition-colors group ">
-                        <div
-                            class="w-16 h-16 rounded-xl bg-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-lock w-8 h-8">
-                                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg></div>
-                        <h3 class="text-xl font-semibold mb-4">General Studies</h3>
-                        <p class="text-gray-400">Important topics and themes for both Prelims and Mains.</p>
+                <h3 class="text-xl font-semibold mb-4">General Studies</h3>
+                <p class="text-gray-400">Important topics and themes for both Prelims and Mains.</p>
+            </div>
+            <div class="card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500 hover:border-blue-500/50 transition-colors group">
+                <div class="w-16 h-16 rounded-xl bg-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings w-8 h-8">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Cutoff Predictions</h3>
+                <p class="text-gray-400">Statistical analysis to predict near about cutoffs at all stages.</p>
+            </div>
+            <div class="card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500 hover:border-blue-500/50 transition-colors group">
+                <div class="w-16 h-16 rounded-xl bg-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-8 h-8">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">PYQs Discussion</h3>
+                <p class="text-gray-400">Around 1000 PYQs of Mains discussed and evaluated.</p>
+            </div>
+            <div class="card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500 hover:border-blue-500/50 transition-colors group">
+                <div class="w-16 h-16 rounded-xl bg-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download w-8 h-8">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" x2="12" y1="15" y2="3"></line>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Optional Guidance</h3>
+                <p class="text-gray-400">Free guidance, answer writing sessions, and evaluations for various optionals.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="py-32 relative overflow-hidden" id="security">
+    <div class="container px-6">
+        <div class="mx-auto">
+            <div class="text-left mb-20">
+                <h2 class="text-5xl font-bold mb-6">Achievements</h2>
+                <p class="text-xl text-gray-400">We are proud to announce that in 2023 AIR 1, AIR 2, and many other toppers have been a part of our community.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
                     </div>
-                    <div
-                        class="card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500 hover:border-blue-500/50 transition-colors group ">
-                        <div
-                            class="w-16 h-16 rounded-xl bg-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-settings w-8 h-8">
-                                <path
-                                    d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z">
-                                </path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg></div>
-                        <h3 class="text-xl font-semibold mb-4">Cutoff Predictions</h3>
-                        <p class="text-gray-400">Statistical analysis to predict near about cutoffs at all stages.</p>
+                    <span class="text-lg">AIR 1, AIR 2 in 2023</span>
+                </div>
+                <div class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
                     </div>
-                    <div
-                        class="card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500 hover:border-blue-500/50 transition-colors group ">
-                        <div
-                            class="w-16 h-16 rounded-xl bg-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-zap w-8 h-8">
-                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                            </svg></div>
-                        <h3 class="text-xl font-semibold mb-4">PYQs Discussion</h3>
-                        <p class="text-gray-400">Around 1000 PYQs of Mains discussed and evaluated.</p>
+                    <span class="text-lg">Highest GS Score in 2022</span>
+                </div>
+                <div class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
                     </div>
-                    <div
-                        class="card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500 hover:border-blue-500/50 transition-colors group ">
-                        <div
-                            class="w-16 h-16 rounded-xl bg-orange-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-download w-8 h-8">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" x2="12" y1="15" y2="3"></line>
-                            </svg></div>
-                        <h3 class="text-xl font-semibold mb-4">Optional Guidance</h3>
-                        <p class="text-gray-400">Free guidance, answer writing sessions, and evaluations for various optionals.</p>
+                    <span class="text-lg">Hindi Medium Toppers</span>
+                </div>
+                <div class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
                     </div>
+                    <span class="text-lg">Biggest Interview Group</span>
+                </div>
+                <div class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg">Verified Mains Group</span>
+                </div>
+                <div class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg">CSAT Video Series</span>
                 </div>
             </div>
         </div>
-        <div class="py-32 relative overflow-hidden " id="security">
-            <div class="container  px-6">
-                <div class=" mx-auto">
-                    <div class="text-left mb-20">
-                        <h2 class="text-5xl font-bold mb-6">Achievements</h2>
-                        <p class="text-xl text-gray-400">We are proud to announce that in 2023 AIR 1, AIR 2, and many other toppers have been a part of our community.</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div
-                            class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
-                            <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
-                                    <path d="M20 6 9 17l-5-5"></path>
-                                </svg></div><span class="text-lg">AIR 1, AIR 2 in 2023</span>
-                        </div>
-                        <div
-                            class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
-                            <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
-                                    <path d="M20 6 9 17l-5-5"></path>
-                                </svg></div><span class="text-lg">Highest GS Score in 2022</span>
-                        </div>
-                        <div
-                            class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
-                            <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
-                                    <path d="M20 6 9 17l-5-5"></path>
-                                </svg></div><span class="text-lg">Hindi Medium Toppers</span>
-                        </div>
-                        <div
-                            class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
-                            <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
-                                    <path d="M20 6 9 17l-5-5"></path>
-                                </svg></div><span class="text-lg">Biggest Interview Group</span>
-                        </div>
-                        <div
-                            class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
-                            <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
-                                    <path d="M20 6 9 17l-5-5"></path>
-                                </svg></div><span class="text-lg">Verified Mains Group</span>
-                        </div>
-                        <div
-                            class="flex items-center space-x-4 card-gradient backdrop-blur-sm rounded-xl p-6 border border-orange-500">
-                            <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-check w-6 h-6">
-                                    <path d="M20 6 9 17l-5-5"></path>
-                                </svg></div><span class="text-lg">CSAT Video Series</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="py-32 relative overflow-hidden bg-blue-50">
-            <div class="container mx-auto px-6">
-                <h2 class="text-5xl font-bold text-left mb-20">Trusted by Aspirants</h2>
-                <div class="relative flex items-center mx-2 md:mx-10">
-                    <button id="prev" class="absolute left-0 md:left-[-2rem] z-10 bg-gray-800 text-white p-2 rounded-full shadow-md">
-                        &#9665;
-                    </button>
-                    <div class="w-full overflow-hidden">
-                        <div id="carousel" class="flex transition-transform duration-500 ease-in-out" style="gap: 0.5rem;">
-                            {% if testimonials %}
-                                {% for testimonial in testimonials %}
-                                    <div class="w-full sm:w-1/2 md:w-1/3 flex-shrink-0 p-4">
-                                        <div class="testimonial card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500">
-                                            <div class="flex items-center mb-6">
-                                                {% if testimonial.image.startswith('http') %}
-                                                    <img src="{{ testimonial.image }}" alt="{{ testimonial.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500">
-                                                {% else %}
-                                                    <img src="data:image/png;base64,{{ testimonial.image }}" alt="{{ testimonial.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500">
-                                                {% endif %}
-                                                <div class="ml-4">
-                                                    <h4 class="font-semibold">{{ testimonial.name }}</h4>
-                                                    <p class="text-sm text-gray-400">Aspirants</p>
-                                                </div>
-                                            </div>
-                                            <p class="text-sm text-black">{{ testimonial.description }}</p>
+    </div>
+</div>
+<div class="py-32 relative overflow-hidden bg-blue-50">
+    <div class="container mx-auto px-6">
+        <h2 class="text-5xl font-bold text-left mb-20">Trusted by Aspirants</h2>
+        <div class="relative flex items-center mx-2 md:mx-10">
+            <button id="prev" class="absolute left-0 md:left-[-2rem] z-10 bg-gray-800 text-white p-2 rounded-full shadow-md">
+                ◁
+            </button>
+            <div class="w-full overflow-hidden">
+                <div id="carousel" class="flex transition-transform duration-500 ease-in-out" style="gap: 0.5rem;">
+                    {% if testimonials %}
+                        {% for testimonial in testimonials %}
+                            <div class="w-full sm:w-1/2 md:w-1/3 flex-shrink-0 p-4">
+                                <div class="testimonial card-gradient backdrop-blur-sm rounded-2xl p-8 border border-orange-500">
+                                    <div class="flex items-center mb-6">
+                                        {% if testimonial.image.startswith('http') %}
+                                            <img src="{{ testimonial.image }}"  alt="{{ testimonial.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500">
+                                        {% else %}
+                                            <img src="data:image/png;base64,{{ testimonial.image }}" alt="{{ testimonial.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500">
+                                        {% endif %}
+                                        <div class="ml-4">
+                                            <h4 class="font-semibold">{{ testimonial.name }}</h4>
+                                            <p class="text-sm text-gray-400">Aspirants</p>
                                         </div>
                                     </div>
-                                {% endfor %}
-                            {% else %}
-                                <p class="text-gray-300">No testimonials available.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <button id="next" class="absolute right-0 md:right-[-3rem] z-10 bg-gray-800 text-white p-2 rounded-full shadow-md">
-                        &#9655;
-                    </button>
+                                    <p class="text-sm text-black">{{ testimonial.description }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-300">No testimonials available.</p>
+                    {% endif %}
                 </div>
             </div>
+            <button id="next" class="absolute right-0 md:right-[-3rem] z-10 bg-gray-800 text-white p-2 rounded-full shadow-md">
+                ▷
+            </button>
         </div>
-        
-        
-        <section id ="contact" class="mx-auto px-6 py-16 max-w-4xl text-center">
-            <!-- Heading -->
-            <h2 class="text-3xl font-bold text-gray-900">Stay Connected</h2>
-            <p class="text-lg text-gray-700 mt-4">
-                WhatsApp and Twitter/X channel for regular information relating to UPSC Civil Services Examination.
-            </p>
-        
-            <!-- Contact Buttons -->
-            <div class="mt-6 flex flex-wrap justify-center gap-4">
-                <a href="https://whatsapp.com/channel/0029Va6A8zt3bbUzqHxhu22A" 
-                target="_blank"
-                   class="px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg hover:bg-green-600">
-                    Join WhatsApp
-                </a>
-                <!-- <a href="https://t.me/YOUR_TELEGRAM_CHANNEL" 
-                   class="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-lg hover:bg-blue-600">
-                    Join Telegram
-                </a> -->
-                <a href="https://x.com/The_Robot01" 
-                target="_blank"
-                   class="px-6 py-3 bg-black text-white rounded-lg shadow-lg hover:bg-gray-800">
-                    Follow on Twitter/X
-                </a>
-            </div>
-        </section>
+    </div>
+</div>
+<section id="contact" class="mx-auto px-6 py-16 max-w-4xl text-center">
+    <h2 class="text-3xl font-bold text-gray-900">Stay Connected</h2>
+    <p class="text-lg text-gray-700 mt-4">
+        WhatsApp and Twitter/X channel for regular information relating to UPSC Civil Services Examination.
+    </p>
+    <div class="mt-6 flex flex-wrap justify-center gap-4">
+        <a href="https://whatsapp.com/channel/0029Va6A8zt3bbUzqHxhu22A" target="_blank" class="px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg hover:bg-green-600">
+            Join WhatsApp
+        </a>
+        <a href="https://x.com/The_Robot01" target="_blank" class="px-6 py-3 bg-black text-white rounded-lg shadow-lg hover:bg-gray-800">
+            Follow on Twitter/X
+        </a>
+    </div>
+</section>
 {% endblock %}
 {% block scripts %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <script src="/static/scripts.js"></script>
-    <!-- <script src="https://unpkg.com/@tailwindcss/browser@4"></script> -->
- 
-    
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const carousel = document.getElementById("carousel");
@@ -314,5 +257,4 @@
             updateCarousel();
         });
     </script>
-    
 {% endblock %}

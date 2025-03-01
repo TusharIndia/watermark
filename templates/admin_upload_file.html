@@ -3,19 +3,23 @@
 {% block title %}Admin - Upload File{% endblock %}
 
 {% block content %}
-<div id="flash-message" class=" z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
+<div id="flash-message" class=" z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md">
+</div>
 
 <div class="text-black">
     <div class="container mx-auto px-4 py-12 mb-[20rem]">
         <div class="max-w-6xl mx-auto">
             <h1 class="text-4xl font-bold text-center mb-6">Document Protection & Watermarking</h1>
-            <p class="text-gray-400 text-lg text-center mb-8">Secure your sensitive documents with enterprise-grade watermarking.</p>
+            <p class="text-gray-400 text-lg text-center mb-8">Secure your sensitive documents with enterprise-grade
+                watermarking.</p>
 
             <!-- Upload Section -->
             <div class=" p-6 rounded-lg ">
                 <form id="upload-form" enctype="multipart/form-data" class="space-y-4">
-                    <input type="file" id="file" name="file" accept="application/pdf" required class="w-full p-2 border border-orange-700 bg-white text-black rounded-lg">
-                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg">Upload</button>
+                    <input type="file" id="file" name="file" accept="application/pdf" required
+                        class="w-full p-2 border border-orange-700 bg-white text-black rounded-lg">
+                    <button type="submit"
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg">Upload</button>
                 </form>
             </div>
 
@@ -42,7 +46,7 @@
             result.files.forEach(fileObj => {
                 const div = document.createElement('div');
                 div.className = "relative bg-white border border-orange-500 w-56 h-20 rounded-lg flex flex-col items-center justify-between p-2 ";
-                
+
                 // Update delete icon to use the provided image URL
                 const deleteIcon = document.createElement('button');
                 deleteIcon.innerHTML = '<img src="https://cdn.iconscout.com/icon/free/png-256/free-delete-icon-download-in-svg-png-gif-file-formats--remove-trash-cancel-garbage-user-interface-pack-icons-2411575.png" alt="Delete" class="w-4 h-4">';
@@ -55,15 +59,15 @@
                 deleteIcon.style.cursor = "pointer";
                 deleteIcon.addEventListener('click', () => deleteFile(fileObj.filename));
                 div.appendChild(deleteIcon);
-                
+
                 const title = document.createElement('div');
                 title.textContent = fileObj.filename;
                 title.className = "text-black text-xs truncate w-full text-center";
                 div.appendChild(title);
-                
+
                 const btnContainer = document.createElement('div');
                 btnContainer.className = "flex space-x-2 mt-2";
-                
+
                 // Add small "Download" button
                 const downloadBtn = document.createElement('button');
                 downloadBtn.textContent = "Download";
@@ -71,7 +75,7 @@
                 downloadBtn.className = "bg-orange-400 text-white px-2 py-1 rounded text-xs hover:bg-blue-500";
                 downloadBtn.addEventListener('click', () => downloadFile(fileObj.filename));
                 btnContainer.appendChild(downloadBtn);
-                
+
                 // Add small "View" button
                 const viewBtn = document.createElement('button');
                 viewBtn.textContent = "View";
@@ -82,13 +86,14 @@
 
                 // Add small "Make Demo" button
                 const demoBtn = document.createElement('button');
-                demoBtn.textContent = fileObj.demo_type ? "Already Demo" : "Make Demo";
+                console.log(fileObj.demo_type);
+                demoBtn.textContent = fileObj.demo_type == 1 ? "Already Demo" : "Make Demo";
                 demoBtn.title = "Make Demo";
                 demoBtn.className = "bg-yellow-400 text-white px-2 py-1 rounded text-xs hover:bg-yellow-500";
-               
+
                 demoBtn.addEventListener('click', () => makeDemo(fileObj.filename, demoBtn));
                 btnContainer.appendChild(demoBtn);
-                
+
                 div.appendChild(btnContainer);
                 container.appendChild(div);
             });
@@ -96,12 +101,12 @@
             container.innerHTML = '<p class="col-span-6 text-center text-gray-500">No files available.</p>';
         }
     }
-    
+
     async function downloadFile(filename) {
         const url = '/uploads/' + encodeURIComponent(filename);
         try {
             const response = await fetch(url);
-            if(!response.ok) {
+            if (!response.ok) {
                 alert('Download failed');
                 return;
             }
@@ -123,33 +128,45 @@
         window.open(url, '_blank');
     }
 
+
     async function deleteFile(filename) {
-        const url = '/delete/' + encodeURIComponent(filename);
+        const url = '/delete';
         try {
-            const response = await fetch(url, { method: 'DELETE' });
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename }) // Sending filename in the body
+            });
+
             const result = await response.json();
             alert(response.ok ? result.message : result.error);
             if (response.ok) loadFiles();
         } catch (error) {
+            console.error('Error deleting file:', error);
             alert('Delete failed');
         }
     }
 
+
     async function makeDemo(filename, button) {
-        const url = '/set_demo/' + encodeURIComponent(filename);
+        const url = '/set_demo'
         try {
-            const response = await fetch(url, { method: 'POST' });
+            const response = await fetch(url,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename })
+                })// Sending filename in the body});
             const result = await response.json();
             alert(response.ok ? result.message : result.error);
             if (response.ok) {
-                
                 button.textContent = result.demo_type ? "Already Demo" : "Make Demo";
             }
         } catch (error) {
             alert('Failed to set demo type');
         }
     }
-    
+
     document.getElementById('upload-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const file = document.getElementById('file').files[0];
@@ -160,7 +177,7 @@
         alert(response.ok ? result.message : result.error);
         if (response.ok) loadFiles();
     });
-    
+
     document.addEventListener("DOMContentLoaded", loadFiles);
 </script>
 {% endblock %}
