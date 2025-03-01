@@ -13,6 +13,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\Tcpdf\Fpdi as TcpdfFpdi;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -322,83 +323,185 @@ if ($request_uri === '/files' && $request_method === 'GET') {
     exit;
 }
 
-// Watermark PDF Function
-if (!function_exists('add_watermark')) {
-    function add_watermark($input_pdf_path, $output_pdf_path, $username) {
-        $pdf = new Fpdi();
-        $page_count = $pdf->setSourceFile($input_pdf_path);
 
-        $temp_pdf_path = $output_pdf_path . '_temp.pdf';
-        for ($page_no = 1; $page_no <= $page_count; $page_no++) {
-            $tpl_id = $pdf->importPage($page_no);
-            $pdf->AddPage();
-            $pdf->useTemplate($tpl_id);
-            $pdf->SetFont('Helvetica', '', 50);
-            $pdf->SetTextColor(180, 180, 180);
-            $pdf->SetXY(100, 100);
-            $pdf->Write(0, $username);
-        }
-        $pdf->Output('F', $temp_pdf_path);
 
-        // Convert to images and back to PDF (similar to Python's logic)
-        $imagick = new Imagick();
-        $imagick->readImage($temp_pdf_path);
-        $images = [];
-        $temp_dir = 'temp_images';
-        if (!file_exists($temp_dir)) mkdir($temp_dir, 0777, true);
 
-        foreach ($imagick as $i => $page) {
-            $img_path = "$temp_dir/page_$i.png";
-            $page->setImageFormat('png');
-            $page->writeImage($img_path);
-            $images[] = $img_path;
-        }
-
-        $imagick->clear();
-        $imagick->destroy();
-
-        $final_pdf = new Fpdi();
-        foreach ($images as $img) {
-            $final_pdf->AddPage();
-            $final_pdf->Image($img, 0, 0, $final_pdf->GetPageWidth(), $final_pdf->GetPageHeight());
-        }
-        $final_pdf->Output('F', $output_pdf_path);
-
-        unlink($temp_pdf_path);
-        foreach ($images as $img) unlink($img);
-        rmdir($temp_dir);
+function delete_file_later($file_path, $delay = 10) {
+    // Use a background process to delete the file after delay
+    if (PHP_OS_FAMILY === 'Windows') {
+        // Windows command
+        $cmd = "ping 127.0.0.1 -n " . ($delay + 1) . " > nul && del " . escapeshellarg($file_path);
+        exec($cmd . " > nul 2>&1 &");
+    } else {
+        // Unix-like systems (Linux, macOS)
+        $cmd = "sleep " . $delay . " && rm -f " . escapeshellarg($file_path);
+        exec($cmd . " > /dev/null 2>&1 &");
     }
 }
 
-// Download PDF (GET /download/<filename>)
-if (preg_match('#^/download/(.+)$#', $request_uri, $matches) && $request_method === 'GET') {
-    $filename = $matches[1];
+function convertPdfToImagesAndBack($inputPath, $outputPath) {
+    try {
+        // Validate file is a PDF
+        if (mime_content_type($inputPath) !== 'application/pdf') {
+            return [
+                'success' => false,
+                'message' => 'Please provide a valid PDF file.'
+            ];
+        }
+
+        // Step 1: Convert PDF pages to images
+        $imagick = new Imagick();
+        $imagick->setResolution(150, 150); // Set resolution for quality
+        $imagick->readImage($inputPath); // Read all pages of the PDF
+
+        $pageCount = $imagick->getNumberImages();
+        $imageFiles = [];
+        $tempDir = dirname($outputPath) . '/temp_' . uniqid() . '/';
+
+        // Create temporary directory if it doesn't exist
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        for ($i = 0; $i < $pageCount; $i++) {
+            $imagick->setIteratorIndex($i); // Set to specific page
+            $imagick->setImageFormat('png'); // Convert to PNG
+            $imagePath = $tempDir . "page_$i.png";
+            $imagick->writeImage($imagePath); // Save image
+            $imageFiles[] = $imagePath;
+        }
+
+        // Step 2: Combine images back into a PDF
+        $combined = new Imagick($imageFiles);
+        $combined->setImageFormat('pdf');
+        $combined->writeImages($outputPath, true); // True to combine into one file
+
+        // Clean up temporary image files and directory
+        foreach ($imageFiles as $file) {
+            unlink($file);
+        }
+        rmdir($tempDir);
+
+        return $output_path;
+
+    } catch (Exception $e) {
+        // Clean up in case of error
+        if (isset($imageFiles) && !empty($imageFiles)) {
+            foreach ($imageFiles as $file) {
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            }
+        }
+        if (isset($tempDir) && file_exists($tempDir)) {
+            rmdir($tempDir);
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Error processing PDF: ' . $e->getMessage()
+        ];
+    }
+}
+
+function createWatermarkedPdf($filename, $current_user, $output_path) {
+    // Create new PDF instance using FPDI for TCPDF
+    $pdf = new TcpdfFpdi();
+
+    // Remove default header/footer
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+
+    // Set document info
+    $pdf->SetCreator('Grok 3');
+    $pdf->SetAuthor('xAI');
+    $pdf->SetTitle('Watermarked PDF');
+    $pdf->SetSubject('Watermarked Document');
+
+    // Use current directory as base
+    $baseDir = __DIR__; // Current directory of this script
+    
+    // Construct full input path using the defined constant
+    $inputFile = $baseDir . DIRECTORY_SEPARATOR . UPLOAD_FOLDER . DIRECTORY_SEPARATOR . $filename;
+    $outputFile = $output_path; // Use provided output path directly
+
+    // Load source PDF
+    $pageCount = $pdf->setSourceFile($inputFile);
+
+    // Loop through all pages
+    for ($i = 1; $i <= $pageCount; $i++) {
+        $pdf->AddPage();
+        $tplIdx = $pdf->importPage($i);
+        $pdf->useTemplate($tplIdx);
+
+        // Set watermark properties
+        $pdf->SetFont('Helvetica', 'B', 40);
+        $pdf->SetTextColor(200, 200, 200); // Lighter gray
+        $pdf->SetAlpha(0.2); // Set transparency
+
+        // Apply rotated watermark (using username as watermark)
+        $pdf->StartTransform();
+        $pdf->Rotate(45, 55, 175);
+        $pdf->Text(55, 175, $current_user);
+        $pdf->StopTransform();
+
+        // Reset alpha
+        $pdf->SetAlpha(1);
+    }
+
+    // Save the output file
+    $pdf->Output($outputFile, 'F');
+    $newfileOutput = convertPdfToImagesAndBack($outputFile, $outputFile);
+    
+    // Return output file path
+    return $newfileOutput;
+}
+
+if ($request_uri === '/download' && $request_method === 'POST') {
+    
+    $raw_data = file_get_contents('php://input');
+    $data = json_decode($raw_data, true);
+    
+    if (!isset($data['filename']) || empty($data['filename'])) {
+        header('Content-Type: application/json');
+        http_response_code(400);
+        echo json_encode(['error' => 'Filename is required in request body']);
+        exit;
+    }
+
     $current_user = user_get_auth();
+    
     if (!$current_user || $current_user->role !== 'user') {
         header('Content-Type: application/json');
-        echo json_encode(['error' => 'Unauthorized']);
         http_response_code(403);
+        echo json_encode(['error' => 'Unauthorized']);
         exit;
     }
-    $input_pdf_path = UPLOAD_FOLDER . '/' . $filename;
+
+    $filename = $data['filename'];
+    
+    // Use current directory as base
+    $baseDir = __DIR__;
+    $input_pdf_path = $baseDir . DIRECTORY_SEPARATOR . UPLOAD_FOLDER . DIRECTORY_SEPARATOR . $filename;
+    $output_pdf_path = $baseDir . DIRECTORY_SEPARATOR . WATERMARKED_FOLDER . DIRECTORY_SEPARATOR . $current_user->username . '_' . $filename;
+
+    // Check if input file exists
     if (!file_exists($input_pdf_path)) {
         header('Content-Type: application/json');
-        echo json_encode(['error' => 'File not found']);
         http_response_code(404);
+        echo json_encode(['error' => 'File not found at ' . $input_pdf_path]);
         exit;
     }
-    $output_pdf_path = WATERMARKED_FOLDER . '/' . $current_user->username . '_' . $filename;
-    add_watermark($input_pdf_path, $output_pdf_path, $current_user->username);
 
-    header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="' . basename($output_pdf_path) . '"');
-    readfile($output_pdf_path);
+    // Create watermarked PDF
+    $newfile =createWatermarkedPdf($filename, $current_user->username, $output_pdf_path);
 
-    // Delete file after 20 seconds
-    sleep(20);
-    unlink($output_pdf_path);
+    delete_file_later($output_pdf_path, 10);
+
     exit;
 }
+
+
 
 // Get Uploaded File (GET /uploads/<filename>)
 if (preg_match('#^/uploads/(.+)$#', $request_uri, $matches) && $request_method === 'GET') {
@@ -715,8 +818,9 @@ if (!function_exists('send_email')) {
 }
 
 // Send Bulk Emails (POST /send-emails)
-if ($request_uri === '/send-emails' && $request_method === 'POST') {
+if ($request_uri === '/send-emails' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        // Check if user is authenticated and has admin role
         $current_user = user_get_auth();
         if (!$current_user || $current_user->role !== 'admin') {
             header('Content-Type: application/json');
@@ -725,6 +829,7 @@ if ($request_uri === '/send-emails' && $request_method === 'POST') {
             exit;
         }
 
+        // Check if file is uploaded
         if (!isset($_FILES['excel_file'])) {
             header('Content-Type: application/json');
             echo json_encode(['error' => 'No file part']);
@@ -740,31 +845,40 @@ if ($request_uri === '/send-emails' && $request_method === 'POST') {
             exit;
         }
 
+        // Sanitize and move the uploaded file
         $filename = basename($excel_file['name']);
         $file_path = UPLOAD_FOLDER . '/' . $filename;
-        
+
         if (!move_uploaded_file($excel_file['tmp_name'], $file_path)) {
             throw new Exception("Failed to move uploaded file");
         }
 
+        // Load and read the Excel file
         $spreadsheet = IOFactory::load($file_path);
         $sheet = $spreadsheet->getActiveSheet();
         $data = $sheet->toArray(null, true, true, true);
 
         $results = [];
         $conn = get_db_connection();
-        
+
+        // Process each row in the Excel sheet
         foreach ($data as $row) {
-            $email = strtolower($row['B'] ?? '');
-            $name = $row['A'] ?? '';
+            // Based on your Excel sheet, columns are:
+            // A: Email, B: Username, C: Password, D: name
+            $email = strtolower($row['A'] ?? ''); // Email is in column A
+            $name = $row['D'] ?? ''; // Name is in column D
+
+            // Skip if email or name is empty
             if (!$email || !$name) continue;
 
             // Validate email format
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                // echo "Invalid email address: $email";
                 $results[] = "Invalid email address: $email";
                 continue;
             }
 
+            // Check if email already exists in the database
             $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
             $stmt->bind_param("s", $email);
             $stmt->execute();
@@ -773,28 +887,33 @@ if ($request_uri === '/send-emails' && $request_method === 'POST') {
                 continue;
             }
 
+            // Generate unique username and password
             $base_username = explode('@', $email)[0];
             $username = generate_unique_username($base_username);
             $password = generate_random_password();
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
             $role = 'user';
 
+            // Insert user into the database
             $stmt = $conn->prepare("INSERT INTO users (name, email, username, password, role) VALUES (?, ?, ?, ?, ?)");
             $stmt->bind_param("sssss", $name, $email, $username, $hashed_password, $role);
             $stmt->execute();
-            
-            // Debug log
+
+            // Log debug information and send email
             $results[] = "Debug: Sending to Email: $email, Username: $username";
             $results[] = send_email($email, $username, $password);
         }
 
+        // Close database connection and clean up
         $conn->close();
         unlink($file_path);
 
+        // Return success response
         header('Content-Type: application/json');
         echo json_encode(['message' => 'Emails sent successfully!', 'details' => $results]);
         exit;
     } catch (Exception $e) {
+        // Clean up if file exists and handle error
         if (file_exists($file_path)) {
             unlink($file_path);
         }
@@ -804,7 +923,6 @@ if ($request_uri === '/send-emails' && $request_method === 'POST') {
         exit;
     }
 }
-
 // Create User (POST /create_user)
 if ($request_uri === '/create_user' && $request_method === 'POST') {
     $current_user = user_get_auth();

@@ -1,4 +1,4 @@
-{% extends "base.html.twig" %}
+{% extends "base.html" %}
 {% block title %}Document Manager{% endblock %}
 
 {% block content %}
@@ -133,8 +133,9 @@
                 
                 const filename = button.dataset.filename;
                 let response;
+                console.log(filename)
                 try {
-                    response = await fetch(`/download/${filename}`);
+                    response = await fetch(`/download` , {method:'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({"filename":filename})});
                 } catch (error) {
                     response = { ok: false };
                 }

@@ -16,11 +16,13 @@
         "firebase/php-jwt": "^6.11",
         "phpoffice/phpspreadsheet": "^1.25",
         "twig/twig": "^3.0",
-        "setasign/fpdi": "^2.3",
+        "setasign/fpdi": "^2.6",
         "tecnickcom/tcpdf": "^6.6",
         "mpdf/mpdf": "^8.2",
         "phpmailer/phpmailer": "^6.9",
         "league/oauth2-client": "^2.8",
-        "league/oauth2-google": "^4.0"
+        "league/oauth2-google": "^4.0",
+        "setasign/fpdf": "^1.8",
+        "setasign/fpdi-fpdf": "^2.3"
     }
 }

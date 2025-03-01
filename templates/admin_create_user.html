@@ -2,16 +2,15 @@
 {% block title %}Admin - Create User{% endblock %}
 
 {% block content %}
-<div class=" mx-auto px-4 py-8 ">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl border border-amber-500"> <!-- increased container width -->
-        <div class="flex  justify-center flex-wrap  items-center w-full my-5 gap-2">
-                <button id="manual-tab" class="lg:mr-5 md:mr-r rounded-3xl py-4 px-6  mb-5  text-center border border-orange-400 bg-white text-orange-500 border-b-2 focus:outline-none">Manual Creation</button>
-                <button id="excel-tab" class="lg:ml-5 rounded-3xl py-4 px-6 mb-5 text-center border border-orange-400 bg-white text-orange-500  border-b-2 focus:outline-none">Excel Upload</button>
+<div class="mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl border border-amber-500">
+        <div class="flex justify-center flex-wrap items-center w-full my-5 gap-2">
+            <button id="manual-tab" class="lg:mr-5 md:mr-5 rounded-3xl py-4 px-6 mb-5 text-center border border-orange-400 bg-white text-orange-500 border-b-2 focus:outline-none">Manual Creation</button>
+            <button id="excel-tab" class="lg:ml-5 rounded-3xl py-4 px-6 mb-5 text-center border border-orange-400 bg-white text-orange-500 border-b-2 focus:outline-none">Excel Upload</button>
         </div>
-        <!-- Tab Navigation -->
         <!-- Manual Creation Tab -->
         <div id="manual-content" class="p-6">
-            <h2 class="text-2xl font-bold text-center   text-orange-500 mb-4">Create User Manually</h2>
+            <h2 class="text-2xl font-bold text-center text-orange-500 mb-4">Create User Manually</h2>
             <form class="mt-6" id="create-user-form">
                 <div class="md:flex md:space-x-4">
                     <div class="w-full md:w-1/2">
@@ -23,8 +22,9 @@
                         <input type="email" id="new-email" name="email" class="w-full p-3 mt-2 bg-gray-100 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter email address" required>
                     </div>
                 </div>
-                
-                <button type="submit" class="w-full px-4 py-3 mt-6 text-white bg-orange-500 rounded-lg cursor-pointer hover:bg-orange-600 focus:outline-none">Create User</button>
+                <div class="mt-6">
+                    <button type="submit" id="create-user-button" class="w-full px-4 py-3 text-white bg-orange-500 rounded-lg cursor-pointer hover:bg-orange-600 focus:outline-none">Create User</button>
+                </div>
             </form>
         </div>
         <!-- Excel Upload Tab -->
@@ -37,105 +37,173 @@
                 </div>
                 <button type="submit" class="w-full px-4 py-3 mt-6 text-white bg-orange-500 rounded-lg hover:bg-orange-600 focus:outline-none">Create Users</button>
             </form>
-            <!-- NEW: Progress container -->
+            <!-- Progress container -->
             <div id="excel-progress-container" class="hidden mt-4">
                 <progress id="excel-progress" value="0" max="100" class="w-full"></progress>
+                <p id="progress-text" class="text-center text-gray-600 mt-2">Uploading and processing...</p>
             </div>
         </div>
     </div>
 </div>
 <!-- Flash message -->
-<div id="flash-message" class="z-100 hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
+<div id="flash-message" class="hidden fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 w-11/12 max-w-md"></div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Updated Tab switching logic to show active state
+    // Tab switching logic (unchanged)
     const manualTab = document.getElementById('manual-tab');
     const excelTab = document.getElementById('excel-tab');
     const manualContent = document.getElementById('manual-content');
     const excelContent = document.getElementById('excel-content');
 
     manualTab.addEventListener('click', () => {
-        // Set manual tab active
         manualTab.classList.add('bg-orange-500', 'text-white');
         manualTab.classList.remove('bg-white', 'text-orange-500');
-        // Set excel tab inactive
         excelTab.classList.add('bg-white', 'text-gray-500');
         excelTab.classList.remove('bg-orange-500', 'text-white');
-        // Toggle content sections
         manualContent.classList.remove('hidden');
         excelContent.classList.add('hidden');
     });
 
     excelTab.addEventListener('click', () => {
-        // Set excel tab active
         excelTab.classList.add('bg-orange-500', 'text-white');
         excelTab.classList.remove('bg-white', 'text-gray-500');
-        // Set manual tab inactive
         manualTab.classList.add('bg-white', 'text-orange-500');
         manualTab.classList.remove('bg-orange-500', 'text-white');
-        // Toggle content sections
         excelContent.classList.remove('hidden');
         manualContent.classList.add('hidden');
     });
 
-    // Existing manual form submit logic
+    // Manual form submit logic with button text change
     document.getElementById('create-user-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('new-name').value.trim();
         const email = document.getElementById('new-email').value.trim();
-        
-        const response = await fetch('/create_user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email })
-        });
-        const result = await response.json();
-        const flashMessage = document.getElementById('flash-message');
-        const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
-        flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
-            <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
-            <p>${response.ok ? result.message : result.error}</p>
-        </div>`;
-        flashMessage.classList.remove('hidden');
-        setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+        const createButton = document.getElementById('create-user-button');
+
+        // Change button text to "Creating..." and disable it
+        createButton.textContent = 'Creating...';
+        createButton.disabled = true;
+        createButton.classList.add('cursor-not-allowed', 'opacity-75'); // Optional: visual feedback
+
+        try {
+            const response = await fetch('/create_user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email })
+            });
+            const result = await response.json();
+
+            // Revert button text to "Create User" and re-enable it
+            createButton.textContent = 'Create User';
+            createButton.disabled = false;
+            createButton.classList.remove('cursor-not-allowed', 'opacity-75');
+
+            // Show flash message
+            const flashMessage = document.getElementById('flash-message');
+            const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
+            flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
+                <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
+                <p>${response.ok ? result.message : result.error}</p>
+            </div>`;
+            flashMessage.classList.remove('hidden');
+            setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+        } catch (error) {
+            console.error('Error creating user:', error);
+            // Revert button text to "Create User" and re-enable it
+            createButton.textContent = 'Create User';
+            createButton.disabled = false;
+            createButton.classList.remove('cursor-not-allowed', 'opacity-75');
+
+            const flashMessage = document.getElementById('flash-message');
+            flashMessage.innerHTML = `<div class="border-l-4 p-4 bg-red-100 border-red-500 text-red-700">
+                <p class="font-bold">Error</p>
+                <p>${error.message || 'An error occurred during user creation'}</p>
+            </div>`;
+            flashMessage.classList.remove('hidden');
+            setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+        }
     });
 
-    // Excel upload form submit logic using fetch with simulated progress bar
+    // Excel upload form submit logic (unchanged, works fine)
     document.getElementById('excel-upload-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const progressContainer = document.getElementById('excel-progress-container');
         const progressEl = document.getElementById('excel-progress');
+        const progressText = document.getElementById('progress-text');
+
+        // Show progress container
         progressContainer.classList.remove('hidden');
         progressEl.value = 0;
-        let progress = 0;
-        const interval = setInterval(() => {
-            if (progress < 90) {
-                progress++;
-                progressEl.value = progress;
-            }
-        }, 100);
-        
-        const response = await fetch('/send-emails', { // API call remains unchanged
-            method: 'POST',
-            body: formData
-        });
-        const result = await response.json();
-        clearInterval(interval);
-        progressEl.value = 100;
-        setTimeout(() => {
-            progressContainer.classList.add('hidden');
-            const flashMessage = document.getElementById('flash-message');
-            const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
-            flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
-                <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
-                <p>${response.ok ? 'Email sent successfully.' : result.error}</p>
-            </div>`;
-            flashMessage.classList.remove('hidden');
-            setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
-        }, 500);
+        progressText.textContent = 'Uploading file...';
+
+        try {
+            // Simulate progress for file upload (0% to 30%)
+            let progress = 0;
+            const uploadInterval = setInterval(() => {
+                if (progress < 30) {
+                    progress += 2;
+                    progressEl.value = progress;
+                } else {
+                    clearInterval(uploadInterval);
+                }
+            }, 100);
+
+            // Send the request to the server
+            const response = await fetch('/send-emails', {
+                method: 'POST',
+                body: formData
+            });
+
+            // Once response is received, complete the progress (30% to 100%)
+            clearInterval(uploadInterval);
+            progressText.textContent = 'Processing emails...';
+            const processingInterval = setInterval(() => {
+                if (progress < 100) {
+                    progress += 2;
+                    progressEl.value = progress;
+                } else {
+                    clearInterval(processingInterval);
+                }
+            }, 100);
+
+            const result = await response.json();
+
+            // Ensure progress reaches 100% before hiding
+            setTimeout(() => {
+                progressEl.value = 100;
+                progressText.textContent = 'Complete!';
+                
+                // Show flash message after a small delay for user feedback
+                setTimeout(() => {
+                    progressContainer.classList.add('hidden');
+                    const flashMessage = document.getElementById('flash-message');
+                    const bgClass = response.ok ? 'bg-green-100 border-green-500 text-green-700' : 'bg-red-100 border-red-500 text-red-700';
+                    flashMessage.innerHTML = `<div class="border-l-4 p-4 ${bgClass}">
+                        <p class="font-bold">${response.ok ? 'Success' : 'Error'}</p>
+                        <p>${response.ok ? 'Emails sent successfully!' : result.error}</p>
+                    </div>`;
+                    flashMessage.classList.remove('hidden');
+                    setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+                }, 500); // Small delay to show "Complete!" before hiding
+            }, 1000); // Allow 1 second for the processing animation to complete
+        } catch (error) {
+            console.error('Error uploading Excel file:', error);
+            progressEl.value = 100;
+            progressText.textContent = 'Failed!';
+            setTimeout(() => {
+                progressContainer.classList.add('hidden');
+                const flashMessage = document.getElementById('flash-message');
+                flashMessage.innerHTML = `<div class="border-l-4 p-4 bg-red-100 border-red-500 text-red-700">
+                    <p class="font-bold">Error</p>
+                    <p>${error.message || 'An error occurred during upload'}</p>
+                </div>`;
+                flashMessage.classList.remove('hidden');
+                setTimeout(() => { flashMessage.classList.add('hidden'); }, 3000);
+            }, 500);
+        }
     });
 </script>
 {% endblock %}
