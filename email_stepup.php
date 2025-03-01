@@ -1,18 +1,21 @@
 <?php
-// email.php
+require 'vendor/autoload.php'; // Composer autoload
 
-// Gmail SMTP Configuration
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\OAuth;
+use League\OAuth2\Client\Provider\Google; // Import the Google provider
 
 const SMTP_SERVER = "smtp.gmail.com";
 const SMTP_PORT = 587;
-$sender_email = $_ENV['SENDER_EMAIL'];
+$sender_email = "rahul.11919011621@ipu.ac.in";
 
 function get_access_token() {
     $url = "https://oauth2.googleapis.com/token";
     $data = [
-        "client_id" => $_ENV["CLIENT_ID"],
-        "client_secret" => $_ENV["CLIENT_SECRET"],
-        "refresh_token" => $_ENV["REFRESH_TOKEN"],
+        "client_id" => "696722818906-si3am383fsavh4irf5im892aak93tenc.apps.googleusercontent.com",
+        "client_secret" => "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",
+        "refresh_token" => "1//04AMLLFsXNPkmCgYIARAAGAQSNwF-L9IrUiy9RmtHLINDIY5hXaxZQmlOGS5-PCEKphCq0ST2n9Jb1z7L2jPv8L2oXQItGgC6Al4",
         "grant_type" => "refresh_token"
     ];
 
@@ -59,45 +62,36 @@ function send_email($to_email, $username, $password) {
         $subject = "Welcome to Udaan UPSC – Your Login Credentials";
         $body = load_email_template($username, $password);
 
-        $boundary = md5(uniqid());
-        $headers = "From: " . $sender_email . "\r\n" .
-                  "MIME-Version: 1.0\r\n" .
-                  "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
-
-        $message = "--{$boundary}\r\n" .
-                  "Content-Type: text/html; charset=UTF-8\r\n" .
-                  "Content-Transfer-Encoding: 7bit\r\n\r\n" .
-                  $body . "\r\n" .
-                  "--{$boundary}--";
-
-        $smtp = fsockopen("tls://" . SMTP_SERVER, SMTP_PORT, $errno, $errstr, 30);
-        if (!$smtp) {
-            throw new Exception("Connection failed: $errstr ($errno)");
-        }
-
-        fgets($smtp, 515);
-        fputs($smtp, "EHLO " . SMTP_SERVER . "\r\n");
-        fgets($smtp, 515);
-        fputs($smtp, "AUTH XOAUTH2 " . base64_encode("user={$sender_email}\1auth=Bearer {$access_token}\1\1") . "\r\n");
-        $auth_response = fgets($smtp, 515);
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = SMTP_SERVER;
+        $mail->SMTPAuth = true;
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = SMTP_PORT;
+        $mail->AuthType = 'XOAUTH2';
         
-        if (strpos($auth_response, "235") !== 0) {
-            throw new Exception("Authentication failed: " . $auth_response);
-        }
+        $mail->setOAuth(
+            new OAuth([
+                'provider' => new Google([
+                    'clientId' => "696722818906-si3am383fsavh4irf5im892aak93tenc.apps.googleusercontent.com",
+                    'clientSecret' => "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",
+                ]),
+                'clientId' => "696722818906-si3am383fsavh4irf5im892aak93tenc.apps.googleusercontent.com",
+                'clientSecret' => "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",
+                'refreshToken' => "1//04AMLLFsXNPkmCgYIARAAGAQSNwF-L9IrUiy9RmtHLINDIY5hXaxZQmlOGS5-PCEKphCq0ST2n9Jb1z7L2jPv8L2oXQItGgC6Al4",
+                'userName' => $sender_email,
+                'accessToken' => $access_token,
+            ])
+        );
 
-        fputs($smtp, "MAIL FROM:<{$sender_email}>\r\n");
-        fgets($smtp, 515);
-        fputs($smtp, "RCPT TO:<{$to_email}>\r\n");
-        fgets($smtp, 515);
-        fputs($smtp, "DATA\r\n");
-        fgets($smtp, 515);
-        fputs($smtp, "Subject: {$subject}\r\n{$headers}\r\n{$message}\r\n.\r\n");
-        fgets($smtp, 515);
-        fputs($smtp, "QUIT\r\n");
-        fclose($smtp);
+        $mail->setFrom($sender_email);
+        $mail->addAddress($to_email);
+        $mail->Subject = $subject;
+        $mail->isHTML(true);
+        $mail->Body = $body;
 
+        $mail->send();
         return "Email sent to {$to_email}";
-
     } catch (Exception $e) {
         return "Failed to send email to {$to_email}. Error: " . $e->getMessage();
     }

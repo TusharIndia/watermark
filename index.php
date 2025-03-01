@@ -716,64 +716,93 @@ if (!function_exists('send_email')) {
 
 // Send Bulk Emails (POST /send-emails)
 if ($request_uri === '/send-emails' && $request_method === 'POST') {
-    $current_user = user_get_auth();
-    if (!$current_user || $current_user->role !== 'admin') {
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Only admin can upload Excel files']);
-        http_response_code(403);
-        exit;
-    }
-    if (!isset($_FILES['excel_file'])) {
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'No file part']);
-        http_response_code(400);
-        exit;
-    }
-    $excel_file = $_FILES['excel_file'];
-    if ($excel_file['name'] === '') {
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'No selected file']);
-        http_response_code(400);
-        exit;
-    }
-    $filename = basename($excel_file['name']);
-    $file_path = UPLOAD_FOLDER . '/' . $filename;
-    move_uploaded_file($excel_file['tmp_name'], $file_path);
-
-    $spreadsheet = IOFactory::load($file_path);
-    $sheet = $spreadsheet->getActiveSheet();
-    $data = $sheet->toArray(null, true, true, true);
-
-    $results = [];
-    $conn = get_db_connection();
-    foreach ($data as $row) {
-        $email = strtolower($row['B'] ?? '');
-        $name = $row['A'] ?? '';
-        if (!$email || !$name) continue;
-
-        $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        if ($stmt->get_result()->fetch_row()[0] > 0) {
-            $results[] = "Email $email already exists.";
-            continue;
+    try {
+        $current_user = user_get_auth();
+        if (!$current_user || $current_user->role !== 'admin') {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Only admin can upload Excel files']);
+            http_response_code(403);
+            exit;
         }
-        $base_username = explode('@', $email)[0];
-        $username = generate_unique_username($base_username);
-        $password = generate_random_password();
-        $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-        $role = 'user';
-        $stmt = $conn->prepare("INSERT INTO users (name, email, username, password, role) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $name, $email, $username, $hashed_password, $role);
-        $stmt->execute();
-        $results[] = send_email($email, $username, $password);
-    }
-    $conn->close();
-    unlink($file_path);
 
-    header('Content-Type: application/json');
-    echo json_encode(['message' => 'Emails sent successfully!', 'details' => $results]);
-    exit;
+        if (!isset($_FILES['excel_file'])) {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'No file part']);
+            http_response_code(400);
+            exit;
+        }
+
+        $excel_file = $_FILES['excel_file'];
+        if ($excel_file['name'] === '') {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'No selected file']);
+            http_response_code(400);
+            exit;
+        }
+
+        $filename = basename($excel_file['name']);
+        $file_path = UPLOAD_FOLDER . '/' . $filename;
+        
+        if (!move_uploaded_file($excel_file['tmp_name'], $file_path)) {
+            throw new Exception("Failed to move uploaded file");
+        }
+
+        $spreadsheet = IOFactory::load($file_path);
+        $sheet = $spreadsheet->getActiveSheet();
+        $data = $sheet->toArray(null, true, true, true);
+
+        $results = [];
+        $conn = get_db_connection();
+        
+        foreach ($data as $row) {
+            $email = strtolower($row['B'] ?? '');
+            $name = $row['A'] ?? '';
+            if (!$email || !$name) continue;
+
+            // Validate email format
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $results[] = "Invalid email address: $email";
+                continue;
+            }
+
+            $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            if ($stmt->get_result()->fetch_row()[0] > 0) {
+                $results[] = "Email $email already exists.";
+                continue;
+            }
+
+            $base_username = explode('@', $email)[0];
+            $username = generate_unique_username($base_username);
+            $password = generate_random_password();
+            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+            $role = 'user';
+
+            $stmt = $conn->prepare("INSERT INTO users (name, email, username, password, role) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssss", $name, $email, $username, $hashed_password, $role);
+            $stmt->execute();
+            
+            // Debug log
+            $results[] = "Debug: Sending to Email: $email, Username: $username";
+            $results[] = send_email($email, $username, $password);
+        }
+
+        $conn->close();
+        unlink($file_path);
+
+        header('Content-Type: application/json');
+        echo json_encode(['message' => 'Emails sent successfully!', 'details' => $results]);
+        exit;
+    } catch (Exception $e) {
+        if (file_exists($file_path)) {
+            unlink($file_path);
+        }
+        header('Content-Type: application/json');
+        echo json_encode(['error' => $e->getMessage()]);
+        http_response_code(500);
+        exit;
+    }
 }
 
 // Create User (POST /create_user)

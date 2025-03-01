@@ -19,6 +19,8 @@
         "setasign/fpdi": "^2.3",
         "tecnickcom/tcpdf": "^6.6",
         "mpdf/mpdf": "^8.2",
-        "phpmailer/phpmailer": "^6.9"
+        "phpmailer/phpmailer": "^6.9",
+        "league/oauth2-client": "^2.8",
+        "league/oauth2-google": "^4.0"
     }
 }
