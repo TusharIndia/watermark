@@ -35,10 +35,10 @@ if (!file_exists(WATERMARKED_FOLDER)) mkdir(WATERMARKED_FOLDER, 0777, true);
 
 // MySQL connection
 $db_config = [
-    'host' => 'srv1824.hstgr.io',
-    'user' => 'u145695899_UdaanByRobot',
-    'password' => 'UdaanByRobot2025Upsc',
-    'database' => 'u145695899_Udaan'
+    'host' => 'demo',
+    'user' => 'demo',
+    'password' => 'demo',
+    'database' => 'demo'
 ];
 
 if (!function_exists('get_db_connection')) {

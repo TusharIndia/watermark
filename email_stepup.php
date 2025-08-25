@@ -13,9 +13,9 @@ $sender_email = "rahul.11919011621@ipu.ac.in";
 function get_access_token() {
     $url = "https://oauth2.googleapis.com/token";
     $data = [
-        "client_id" => "696722818906-si3am383fsavh4irf5im892aak93tenc.apps.googleusercontent.com",
-        "client_secret" => "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",
-        "refresh_token" => "1//04AMLLFsXNPkmCgYIARAAGAQSNwF-L9IrUiy9RmtHLINDIY5hXaxZQmlOGS5-PCEKphCq0ST2n9Jb1z7L2jPv8L2oXQItGgC6Al4",
+        "client_id" => "demo",
+        "client_secret" => "demo",
+        "refresh_token" => "demo",
         "grant_type" => "refresh_token"
     ];
 
